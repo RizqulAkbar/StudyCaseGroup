@@ -32,13 +32,14 @@ namespace PenggunaAPI
             services
                 .AddGraphQLServer()
                 .AddQueryType<Query>()
-                .AddQueryType<Mutation>()
+                .AddMutationType<Mutation>()
                 .AddAuthorization();
             
             services.Configure<KafkaSettings>(Configuration.GetSection("KafkaSettings"));
 
-            services.Configure<TokenSettings>(Configuration.GetSection("TokenSettings"));
+            services.AddControllers();
 
+            services.Configure<TokenSettings>(Configuration.GetSection("TokenSettings"));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                .AddJwtBearer(options =>
                {
