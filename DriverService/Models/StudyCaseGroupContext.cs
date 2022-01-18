@@ -38,8 +38,6 @@ namespace DriverService.Models
 
             modelBuilder.Entity<Order>(entity =>
             {
-                entity.ToTable("Order");
-
                 entity.Property(e => e.OrderId).HasColumnName("OrderID");
 
                 entity.Property(e => e.Created).HasColumnType("datetime");
@@ -57,13 +55,13 @@ namespace DriverService.Models
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.DriverId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Order_UserDriver");
+                    .HasConstraintName("FK_Orders_UserDriver");
 
                 entity.HasOne(d => d.Pengguna)
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.PenggunaId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Order_UserPengguna");
+                    .HasConstraintName("FK_Orders_UserPengguna");
             });
 
             modelBuilder.Entity<PriceAdmin>(entity =>

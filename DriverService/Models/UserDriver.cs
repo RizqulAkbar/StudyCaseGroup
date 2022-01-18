@@ -21,6 +21,8 @@ namespace DriverService.Models
         public string Password { get; set; }
         public double LatDriver { get; set; }
         public double LongDriver { get; set; }
+        public bool Lock { get; set; }
+        public bool Approved { get; set; }
 
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<SaldoDriver> SaldoDrivers { get; set; }

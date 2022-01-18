@@ -1,5 +1,6 @@
 ﻿using DriverService.Data;
 using DriverService.Models;
+using GeoCoordinatePortable;
 using HotChocolate;
 using HotChocolate.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
@@ -14,8 +15,97 @@ namespace DriverService.GraphQL
 {
     public class Mutation
     {
-        //Order
+        //Saldo
 
+        //Tambah Saldo
+        [Authorize]
+        public async Task<SaldoDriver> PutSaldoAsync(
+                PriceAdmin priceadmin,
+                int id,
+                [Service] StudyCaseGroupContext context)
+        {
+            if (priceadmin == null)
+            {
+                var price1 = new PriceAdmin
+                {
+                    Price = 15000,
+                    Created = DateTime.Now
+                };
+
+                context.PriceAdmins.Add(price1);
+                await context.SaveChangesAsync();
+            }
+             
+            var driver = context.SaldoDrivers.Where(o => o.DriverId == id).OrderByDescending(x => x.Created).FirstOrDefault();
+
+            var price = context.PriceAdmins.OrderByDescending(x => x.Created).FirstOrDefault();
+
+            var position = context.Orders.Where(o => o.DriverId == id).OrderByDescending(x => x.Created).FirstOrDefault();
+
+            var sCoord = new GeoCoordinate(position.LatPengguna, position.LongPengguna);
+            var eCoord = new GeoCoordinate(position.LatTujuan, position.LongTujuan);
+
+            var s = sCoord.GetDistanceTo(eCoord);
+
+            if (driver == null)
+            {
+                Console.WriteLine("Driver tidak ditemukan");
+                return null;
+            }
+            else
+            {
+                var newSaldo = new SaldoDriver
+                {
+                    DriverId = driver.DriverId,
+                    SelisihSaldo = price.Price * (float)s,
+                    TotalSaldo = driver.TotalSaldo + price.Price * 80,
+                    Created = DateTime.Now
+                };
+
+                context.SaldoDrivers.Add(newSaldo);
+                await context.SaveChangesAsync();
+
+                return await Task.FromResult(newSaldo);
+            }
+
+        }
+
+        //Tarik saldo
+        [Authorize]
+        public async Task<SaldoDriver> PullSaldoAsync(
+                int id,
+                float pull,
+                PriceAdmin price,
+                [Service] StudyCaseGroupContext context)
+        {
+
+            //var driver = context.SaldoDrivers.Where(o => o.DriverId == id).FirstOrDefault();
+            var driver = context.SaldoDrivers.Where(o => o.DriverId == id).OrderByDescending(x => x.Created).FirstOrDefault();
+
+            if (driver == null)
+            {
+                Console.WriteLine("Driver tidak ditemukan");
+                return null;
+            }
+            else
+            {
+                var newSaldo = new SaldoDriver
+                {
+                    DriverId = driver.DriverId,
+                    SelisihSaldo = price.Price * 80,
+                    TotalSaldo = driver.TotalSaldo - pull,
+                    Created = DateTime.Now
+                };
+
+                context.SaldoDrivers.Add(newSaldo);
+                await context.SaveChangesAsync();
+
+                return await Task.FromResult(newSaldo);
+            }
+
+        }
+
+        //SetPosition
         [Authorize]
         public async Task<UserDriver> SetPositionAsync(
                 SetPosition input,
@@ -45,12 +135,16 @@ namespace DriverService.GraphQL
             return await Task.FromResult(positionDriver);
         }
 
+        //Order
+        //Accept and finish order
+
         [Authorize]
         public async Task<OrderOutput> AcceptOrderAsync(
             OrderInput input,
             [Service] StudyCaseGroupContext context)
         {
-            var order = context.Orders.Where(o => o.DriverId == input.DriverID && o.PenggunaId == input.PenggunaID).FirstOrDefault();
+            var order = context.Orders.Where(o => o.DriverId == input.DriverID && o.PenggunaId == input.PenggunaID
+            && o.Status == "Pending").FirstOrDefault();
             if (order != null)
             {
                 order.Status = "Accepted";
@@ -67,17 +161,18 @@ namespace DriverService.GraphQL
             OrderInput input,
             [Service] StudyCaseGroupContext context)
         {
-            var order = context.Orders.Where(o => o.DriverId == input.DriverID && o.PenggunaId == input.PenggunaID).FirstOrDefault();
+            var order = context.Orders.Where(o => o.DriverId == input.DriverID && o.PenggunaId == input.PenggunaID 
+            && o.Status == "Accepted").FirstOrDefault();
             if (order != null)
             {
-                order.Status = "Finish";
+                order.Status = "Finished";
 
                 context.Orders.Update(order);
                 await context.SaveChangesAsync();
             }
 
 
-            return new OrderOutput(order);
+                return new OrderOutput(order);
         }
 
 
@@ -104,6 +199,17 @@ namespace DriverService.GraphQL
 
             var ret = context.UserDrivers.Add(newUser);
             await context.SaveChangesAsync();
+
+            var newSaldo = new SaldoDriver
+                {
+                    DriverId = newUser.DriverId,
+                    SelisihSaldo = 0,
+                    TotalSaldo = 0,
+                    Created = DateTime.Now
+                };
+
+                context.SaldoDrivers.Add(newSaldo);
+                await context.SaveChangesAsync();
 
             return await Task.FromResult(new UserData
             {
