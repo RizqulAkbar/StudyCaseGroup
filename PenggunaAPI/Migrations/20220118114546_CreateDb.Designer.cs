@@ -10,7 +10,7 @@ using PenggunaAPI.Data;
 namespace PenggunaAPI.Migrations
 {
     [DbContext(typeof(PenggunaDbContext))]
-    [Migration("20220118091755_CreateDb")]
+    [Migration("20220118114546_CreateDb")]
     partial class CreateDb
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -55,7 +55,7 @@ namespace PenggunaAPI.Migrations
                     b.Property<int>("PenggunaId")
                         .HasColumnType("int");
 
-                    b.Property<float?>("Price")
+                    b.Property<float>("Price")
                         .HasColumnType("real");
 
                     b.Property<string>("Status")

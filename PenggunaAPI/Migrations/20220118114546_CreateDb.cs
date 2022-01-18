@@ -69,7 +69,7 @@ namespace PenggunaAPI.Migrations
                     LatTujuan = table.Column<double>(type: "float", nullable: false),
                     LongTujuan = table.Column<double>(type: "float", nullable: false),
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Price = table.Column<float>(type: "real", nullable: true),
+                    Price = table.Column<float>(type: "real", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
