@@ -61,6 +61,8 @@ namespace PenggunaAPI.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PenggunaId");
+
                     b.ToTable("Orders");
                 });
 
@@ -139,7 +141,8 @@ namespace PenggunaAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PenggunaId");
+                    b.HasIndex("PenggunaId")
+                        .IsUnique();
 
                     b.ToTable("Saldos");
                 });
@@ -166,11 +169,22 @@ namespace PenggunaAPI.Migrations
                     b.ToTable("UserRoles");
                 });
 
+            modelBuilder.Entity("PenggunaAPI.Models.Order", b =>
+                {
+                    b.HasOne("PenggunaAPI.Models.Pengguna", "Pengguna")
+                        .WithMany("Orders")
+                        .HasForeignKey("PenggunaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pengguna");
+                });
+
             modelBuilder.Entity("PenggunaAPI.Models.Saldo", b =>
                 {
                     b.HasOne("PenggunaAPI.Models.Pengguna", "Pengguna")
-                        .WithMany()
-                        .HasForeignKey("PenggunaId")
+                        .WithOne("Saldo")
+                        .HasForeignKey("PenggunaAPI.Models.Saldo", "PenggunaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -180,7 +194,7 @@ namespace PenggunaAPI.Migrations
             modelBuilder.Entity("PenggunaAPI.Models.UserRole", b =>
                 {
                     b.HasOne("PenggunaAPI.Models.Pengguna", "Pengguna")
-                        .WithMany()
+                        .WithMany("UserRoles")
                         .HasForeignKey("PenggunaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -194,6 +208,15 @@ namespace PenggunaAPI.Migrations
                     b.Navigation("Pengguna");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("PenggunaAPI.Models.Pengguna", b =>
+                {
+                    b.Navigation("Orders");
+
+                    b.Navigation("Saldo");
+
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("PenggunaAPI.Models.Role", b =>

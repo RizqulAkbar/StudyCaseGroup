@@ -19,5 +19,8 @@ namespace PenggunaAPI.Models
         public double Longitude { get; set; }
         public DateTime Created { get; set; }
         public bool isLocked { get; set; }
+        public ICollection<Order> Orders { get; set; }
+        public Saldo Saldo { get; set; }
+        public ICollection<UserRole> UserRoles { get; set; }
     }
 }

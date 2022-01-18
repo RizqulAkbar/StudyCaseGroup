@@ -3,33 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PenggunaAPI.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class CreateDb : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "Orders",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    DriverId = table.Column<int>(type: "int", nullable: true),
-                    PenggunaId = table.Column<int>(type: "int", nullable: false),
-                    LatPengguna = table.Column<double>(type: "float", nullable: false),
-                    LongPengguna = table.Column<double>(type: "float", nullable: false),
-                    LatDriver = table.Column<double>(type: "float", nullable: true),
-                    LongDriver = table.Column<double>(type: "float", nullable: true),
-                    LatTujuan = table.Column<double>(type: "float", nullable: false),
-                    LongTujuan = table.Column<double>(type: "float", nullable: false),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Price = table.Column<float>(type: "real", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Orders", x => x.Id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "Penggunas",
                 columns: table => new
@@ -62,6 +39,35 @@ namespace PenggunaAPI.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Roles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Orders",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DriverId = table.Column<int>(type: "int", nullable: true),
+                    PenggunaId = table.Column<int>(type: "int", nullable: false),
+                    LatPengguna = table.Column<double>(type: "float", nullable: false),
+                    LongPengguna = table.Column<double>(type: "float", nullable: false),
+                    LatDriver = table.Column<double>(type: "float", nullable: true),
+                    LongDriver = table.Column<double>(type: "float", nullable: true),
+                    LatTujuan = table.Column<double>(type: "float", nullable: false),
+                    LongTujuan = table.Column<double>(type: "float", nullable: false),
+                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Price = table.Column<float>(type: "real", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Orders", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Orders_Penggunas_PenggunaId",
+                        column: x => x.PenggunaId,
+                        principalTable: "Penggunas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -113,9 +119,15 @@ namespace PenggunaAPI.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Orders_PenggunaId",
+                table: "Orders",
+                column: "PenggunaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Saldos_PenggunaId",
                 table: "Saldos",
-                column: "PenggunaId");
+                column: "PenggunaId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_PenggunaId",
