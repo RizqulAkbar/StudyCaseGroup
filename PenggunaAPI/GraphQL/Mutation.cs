@@ -177,15 +177,16 @@ namespace PenggunaAPI.GraphQL
                 db.Orders.Add(newOrder);
                 await db.SaveChangesAsync();
 
-                var saldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).FirstOrDefault();
-                if (saldo != null)
+                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(d => d.Created).FirstOrDefault();
+                var newSaldo = new Saldo()
                 {
-                    saldo.TotalSaldo = saldo.TotalSaldo - price;
-                    saldo.MutasiSaldo = -price;
-
-                    db.Saldos.Update(saldo);
-                    await db.SaveChangesAsync();
-                }
+                    PenggunaId = currentPengguna.PenggunaId,
+                    TotalSaldo = oldSaldo.TotalSaldo - price,
+                    MutasiSaldo = -price,
+                    Created = DateTime.Now
+                };
+                db.Saldos.Add(newSaldo);
+                await db.SaveChangesAsync();
                 return new Status(true, "Order Successful, please check your order fee");
             }
             else
@@ -202,13 +203,17 @@ namespace PenggunaAPI.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var saldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).FirstOrDefault();
-            if (saldo != null)
+            var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(d => d.Created).FirstOrDefault();
+            if (oldSaldo != null)
             {
-                saldo.TotalSaldo = saldo.TotalSaldo + topUp;
-                saldo.MutasiSaldo = topUp;
-
-                db.Saldos.Update(saldo);
+                var newSaldo = new Saldo()
+                {
+                    PenggunaId = currentPengguna.PenggunaId,
+                    TotalSaldo = oldSaldo.TotalSaldo + topUp,
+                    MutasiSaldo = topUp,
+                    Created = DateTime.Now
+                };
+                db.Saldos.Add(newSaldo);
                 await db.SaveChangesAsync();
                 return new Status(true, $"Top Up Successful, {topUp} has been added to your balance");
             }

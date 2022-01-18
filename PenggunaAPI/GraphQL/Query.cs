@@ -38,12 +38,9 @@ namespace PenggunaAPI.GraphQL
             {
                 OrderId = p.OrderId,
                 PenggunaId = p.PenggunaId,
-                LatPengguna = p.LatPengguna,
-                LongPengguna = p.LongPengguna,
-                LatTujuan = p.LatTujuan,
-                LongTujuan = p.LongTujuan,
                 Created = p.Created,
                 Price = p.Price,
+                Status = p.Status
             }).Where(o => o.PenggunaId == penggunaId && o.Status=="Pending").AsQueryable();
         }
     }
