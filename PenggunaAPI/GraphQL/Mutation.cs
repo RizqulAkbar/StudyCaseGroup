@@ -50,6 +50,7 @@ namespace PenggunaAPI.GraphQL
             {
                 PenggunaId = currentPengguna.PenggunaId,
                 TotalSaldo = input.Saldo,
+                MutasiSaldo = null,
                 Created = DateTime.Now
             };
             db.Saldos.Add(newSaldo);
@@ -145,7 +146,9 @@ namespace PenggunaAPI.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
+            var currentSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).FirstOrDefault();
             var pricePerKm = db.Prices.FirstOrDefault();
+
             var d1 = currentPengguna.Latitude * (Math.PI / 180.0);
             var num1 = currentPengguna.Longitude * (Math.PI / 180.0);
             var d2 = input.LatTujuan * (Math.PI / 180.0);
@@ -155,23 +158,42 @@ namespace PenggunaAPI.GraphQL
             var distance = 6378.137 * (2.0 * Math.Atan2(Math.Sqrt(d3), Math.Sqrt(1.0 - d3)));
             float price = (float)distance * 1;
 
-            var newOrder = new Order
+            if (currentSaldo.TotalSaldo >= price)
             {
-                DriverId = null,
-                PenggunaId = currentPengguna.PenggunaId,
-                LatPengguna = currentPengguna.Latitude,
-                LongPengguna = currentPengguna.Longitude,
-                LatDriver = null,
-                LongDriver = null,
-                LatTujuan = input.LatTujuan,
-                LongTujuan = input.LongTujuan,
-                Created = DateTime.Now,
-                Price = price,
-                Status = "Pending"
-            };
-            db.Orders.Add(newOrder);
-            await db.SaveChangesAsync();
-            return new Status(true, "Order Successful, please check your order fee");
+                var newOrder = new Order
+                {
+                    DriverId = null,
+                    PenggunaId = currentPengguna.PenggunaId,
+                    LatPengguna = currentPengguna.Latitude,
+                    LongPengguna = currentPengguna.Longitude,
+                    LatDriver = null,
+                    LongDriver = null,
+                    LatTujuan = input.LatTujuan,
+                    LongTujuan = input.LongTujuan,
+                    Created = DateTime.Now,
+                    Price = price,
+                    Status = "Pending"
+                };
+                db.Orders.Add(newOrder);
+                await db.SaveChangesAsync();
+
+                var saldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).FirstOrDefault();
+                if (saldo != null)
+                {
+                    saldo.TotalSaldo = saldo.TotalSaldo - price;
+                    List<float> priceList = new List<float>();
+                    priceList.Add(-price);
+                    saldo.MutasiSaldo = priceList;
+
+                    db.Saldos.Update(saldo);
+                    await db.SaveChangesAsync();
+                }
+                return new Status(true, "Order Successful, please check your order fee");
+            }
+            else
+            {
+                return new Status(false, "Order Failed, please check your balance");
+            }
         }
 
         public async Task<Status> TopUpAsync(
@@ -182,19 +204,21 @@ namespace PenggunaAPI.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var saldo = db.Saldos.Where(o=>o.PenggunaId == currentPengguna.PenggunaId).FirstOrDefault();
-            if (saldo!=null)
+            var saldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).FirstOrDefault();
+            if (saldo != null)
             {
-                saldo.TotalSaldo = saldo.TotalSaldo+topUp;
-                saldo.MutasiSaldo = topUp;
+                saldo.TotalSaldo = saldo.TotalSaldo + topUp;
+                List<float> topUpList = new List<float>();
+                topUpList.Add(topUp);
+                saldo.MutasiSaldo = topUpList;
 
                 db.Saldos.Update(saldo);
                 await db.SaveChangesAsync();
-                return new Status(true,$"Top Up Successful, {topUp} has been added to your balance");
+                return new Status(true, $"Top Up Successful, {topUp} has been added to your balance");
             }
             else
             {
-                return new Status(false,"Top Up Failed");
+                return new Status(false, "Top Up Failed");
             }
         }
     }
