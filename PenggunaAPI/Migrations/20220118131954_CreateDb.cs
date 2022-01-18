@@ -139,8 +139,7 @@ namespace PenggunaAPI.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Saldos_PenggunaId",
                 table: "Saldos",
-                column: "PenggunaId",
-                unique: true);
+                column: "PenggunaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_PenggunaId",

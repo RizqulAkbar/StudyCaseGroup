@@ -43,5 +43,21 @@ namespace PenggunaAPI.GraphQL
                 Status = p.Status
             }).Where(o => o.PenggunaId == penggunaId && o.Status=="Pending").AsQueryable();
         }
+
+        [Authorize(Roles = new[] { "Pengguna" })]
+        public IEnumerable<SaldoOutput> GetSaldo(
+            [Service] PenggunaDbContext db,
+            [Service] IHttpContextAccessor httpContextAccessor)
+        {
+            var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            return db.Saldos.Select(p=> new SaldoOutput()
+            {
+                SaldoId = p.SaldoId,
+                PenggunaId = p.PenggunaId,
+                TotalSaldo = p.TotalSaldo,
+                MutasiSaldo = p.MutasiSaldo,
+                Created = p.Created
+            }).Where(o => o.PenggunaId == penggunaId).ToList();
+        }
     }
 }

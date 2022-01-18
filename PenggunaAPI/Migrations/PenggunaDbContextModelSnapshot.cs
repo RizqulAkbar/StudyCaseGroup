@@ -156,8 +156,7 @@ namespace PenggunaAPI.Migrations
 
                     b.HasKey("SaldoId");
 
-                    b.HasIndex("PenggunaId")
-                        .IsUnique();
+                    b.HasIndex("PenggunaId");
 
                     b.ToTable("Saldos");
                 });
@@ -198,8 +197,8 @@ namespace PenggunaAPI.Migrations
             modelBuilder.Entity("PenggunaAPI.Models.Saldo", b =>
                 {
                     b.HasOne("PenggunaAPI.Models.Pengguna", "Pengguna")
-                        .WithOne("Saldo")
-                        .HasForeignKey("PenggunaAPI.Models.Saldo", "PenggunaId")
+                        .WithMany("Saldo")
+                        .HasForeignKey("PenggunaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

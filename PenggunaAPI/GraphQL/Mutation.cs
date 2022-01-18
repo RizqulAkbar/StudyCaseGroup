@@ -195,6 +195,7 @@ namespace PenggunaAPI.GraphQL
             }
         }
 
+        [Authorize(Roles = new[] { "Pengguna" })]
         public async Task<Status> TopUpAsync(
             float topUp,
             [Service] PenggunaDbContext db,

@@ -20,7 +20,7 @@ namespace PenggunaAPI.Models
         public DateTime Created { get; set; }
         public bool isLocked { get; set; }
         public ICollection<Order> Orders { get; set; }
-        public Saldo Saldo { get; set; }
+        public ICollection<Saldo> Saldo { get; set; }
         public ICollection<UserRole> UserRoles { get; set; }
     }
 }
