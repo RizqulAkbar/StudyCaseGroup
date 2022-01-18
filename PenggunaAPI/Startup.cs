@@ -37,6 +37,7 @@ namespace PenggunaAPI
             
             services.Configure<KafkaSettings>(Configuration.GetSection("KafkaSettings"));
 
+            services.AddHttpContextAccessor();
             services.AddControllers();
 
             services.Configure<TokenSettings>(Configuration.GetSection("TokenSettings"));
