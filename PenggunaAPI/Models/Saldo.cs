@@ -14,5 +14,6 @@ namespace PenggunaAPI.Models
         public float TotalSaldo { get; set; }
         public float TopUpSaldo { get; set; }
         public DateTime Created { get; set; }
+        public Pengguna Pengguna { get; set; }
     }
 }

@@ -53,11 +53,13 @@ namespace PenggunaAPI.GraphQL
                 db.Roles.Add(newRole);
                 await db.SaveChangesAsync();
             }
+
             var presentPengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
+            var presentRole = db.Roles.Where(o => o.Name == "Pengguna").FirstOrDefault();
             var newUserRole = new UserRole
             {
-                UserId = presentPengguna.Id,
-                RoleId = role.Id
+                PenggunaId = presentPengguna.Id,
+                RoleId = presentRole.Id
             };
             db.UserRoles.Add(newUserRole);
             await db.SaveChangesAsync();
@@ -95,7 +97,7 @@ namespace PenggunaAPI.GraphQL
 
                 var claims = new List<Claim>();
                 claims.Add(new Claim(ClaimTypes.Name, pengguna.Username));
-                var userRoles = db.UserRoles.Where(o => o.UserId == pengguna.Id).ToList();
+                var userRoles = db.UserRoles.Where(o => o.PenggunaId == pengguna.Id).ToList();
 
                 foreach (var userRole in userRoles)
                 {
@@ -144,7 +146,7 @@ namespace PenggunaAPI.GraphQL
             };
             db.Orders.Add(newOrder);
             await db.SaveChangesAsync();
-            return new Status(true,"Order Success, please wait your driver to pick you up");
+            return new Status(true, "Order Success, please wait your driver to pick you up");
         }
     }
 }

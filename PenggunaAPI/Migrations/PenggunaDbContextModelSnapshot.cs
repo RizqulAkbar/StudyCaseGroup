@@ -139,6 +139,8 @@ namespace PenggunaAPI.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PenggunaId");
+
                     b.ToTable("Saldos");
                 });
 
@@ -149,13 +151,10 @@ namespace PenggunaAPI.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int?>("PenggunaId")
+                    b.Property<int>("PenggunaId")
                         .HasColumnType("int");
 
                     b.Property<int>("RoleId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -167,11 +166,24 @@ namespace PenggunaAPI.Migrations
                     b.ToTable("UserRoles");
                 });
 
+            modelBuilder.Entity("PenggunaAPI.Models.Saldo", b =>
+                {
+                    b.HasOne("PenggunaAPI.Models.Pengguna", "Pengguna")
+                        .WithMany()
+                        .HasForeignKey("PenggunaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pengguna");
+                });
+
             modelBuilder.Entity("PenggunaAPI.Models.UserRole", b =>
                 {
                     b.HasOne("PenggunaAPI.Models.Pengguna", "Pengguna")
                         .WithMany()
-                        .HasForeignKey("PenggunaId");
+                        .HasForeignKey("PenggunaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("PenggunaAPI.Models.Role", "Role")
                         .WithMany("UserRoles")

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PenggunaAPI.Migrations
 {
-    public partial class InitCreate : Migration
+    public partial class InitialCreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -78,6 +78,12 @@ namespace PenggunaAPI.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Saldos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Saldos_Penggunas_PenggunaId",
+                        column: x => x.PenggunaId,
+                        principalTable: "Penggunas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -86,9 +92,8 @@ namespace PenggunaAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    RoleId = table.Column<int>(type: "int", nullable: false),
-                    PenggunaId = table.Column<int>(type: "int", nullable: true)
+                    PenggunaId = table.Column<int>(type: "int", nullable: false),
+                    RoleId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -98,7 +103,7 @@ namespace PenggunaAPI.Migrations
                         column: x => x.PenggunaId,
                         principalTable: "Penggunas",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_UserRoles_Roles_RoleId",
                         column: x => x.RoleId,
@@ -106,6 +111,11 @@ namespace PenggunaAPI.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Saldos_PenggunaId",
+                table: "Saldos",
+                column: "PenggunaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_PenggunaId",
