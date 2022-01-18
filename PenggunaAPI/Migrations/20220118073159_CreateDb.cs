@@ -11,7 +11,7 @@ namespace PenggunaAPI.Migrations
                 name: "Penggunas",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    PenggunaId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Firstname = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -25,40 +25,40 @@ namespace PenggunaAPI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Penggunas", x => x.Id);
+                    table.PrimaryKey("PK_Penggunas", x => x.PenggunaId);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Prices",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    PriceId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PricePerKm = table.Column<float>(type: "real", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Prices", x => x.Id);
+                    table.PrimaryKey("PK_Prices", x => x.PriceId);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Roles",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    RoleId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Roles", x => x.Id);
+                    table.PrimaryKey("PK_Roles", x => x.RoleId);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Orders",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    OrderId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DriverId = table.Column<int>(type: "int", nullable: true),
                     PenggunaId = table.Column<int>(type: "int", nullable: false),
@@ -74,12 +74,12 @@ namespace PenggunaAPI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Orders", x => x.Id);
+                    table.PrimaryKey("PK_Orders", x => x.OrderId);
                     table.ForeignKey(
                         name: "FK_Orders_Penggunas_PenggunaId",
                         column: x => x.PenggunaId,
                         principalTable: "Penggunas",
-                        principalColumn: "Id",
+                        principalColumn: "PenggunaId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -87,7 +87,7 @@ namespace PenggunaAPI.Migrations
                 name: "Saldos",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    SaldoId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PenggunaId = table.Column<int>(type: "int", nullable: false),
                     TotalSaldo = table.Column<float>(type: "real", nullable: false),
@@ -96,12 +96,12 @@ namespace PenggunaAPI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Saldos", x => x.Id);
+                    table.PrimaryKey("PK_Saldos", x => x.SaldoId);
                     table.ForeignKey(
                         name: "FK_Saldos_Penggunas_PenggunaId",
                         column: x => x.PenggunaId,
                         principalTable: "Penggunas",
-                        principalColumn: "Id",
+                        principalColumn: "PenggunaId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -109,25 +109,25 @@ namespace PenggunaAPI.Migrations
                 name: "UserRoles",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    UserRoleId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PenggunaId = table.Column<int>(type: "int", nullable: false),
                     RoleId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserRoles", x => x.Id);
+                    table.PrimaryKey("PK_UserRoles", x => x.UserRoleId);
                     table.ForeignKey(
                         name: "FK_UserRoles_Penggunas_PenggunaId",
                         column: x => x.PenggunaId,
                         principalTable: "Penggunas",
-                        principalColumn: "Id",
+                        principalColumn: "PenggunaId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_UserRoles_Roles_RoleId",
                         column: x => x.RoleId,
                         principalTable: "Roles",
-                        principalColumn: "Id",
+                        principalColumn: "RoleId",
                         onDelete: ReferentialAction.Cascade);
                 });
 

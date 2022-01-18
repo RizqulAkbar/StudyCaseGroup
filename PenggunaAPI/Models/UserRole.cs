@@ -9,7 +9,7 @@ namespace PenggunaAPI.Models
     public class UserRole
     {
         [Key]
-        public int Id { get; set; }
+        public int UserRoleId { get; set; }
         public int PenggunaId { get; set; }
         public int RoleId { get; set; }
 

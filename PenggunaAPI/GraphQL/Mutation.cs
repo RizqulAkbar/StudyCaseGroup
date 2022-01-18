@@ -56,12 +56,12 @@ namespace PenggunaAPI.GraphQL
                 await db.SaveChangesAsync();
             }
 
-            var presentPengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
-            var presentRole = db.Roles.Where(o => o.Name == "Pengguna").FirstOrDefault();
+            var currentPengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
+            var currentRole = db.Roles.Where(o => o.Name == "Pengguna").FirstOrDefault();
             var newUserRole = new UserRole
             {
-                PenggunaId = presentPengguna.Id,
-                RoleId = presentRole.Id
+                PenggunaId = currentPengguna.PenggunaId,
+                RoleId = currentRole.RoleId
             };
             db.UserRoles.Add(newUserRole);
             await db.SaveChangesAsync();
@@ -99,12 +99,12 @@ namespace PenggunaAPI.GraphQL
 
                 var claims = new List<Claim>();
                 claims.Add(new Claim(ClaimTypes.Name, pengguna.Username));
-                claims.Add(new Claim(ClaimTypes.NameIdentifier, pengguna.Id.ToString()));
-                var userRoles = db.UserRoles.Where(o => o.PenggunaId == pengguna.Id).ToList();
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, pengguna.PenggunaId.ToString()));
+                var userRoles = db.UserRoles.Where(o => o.PenggunaId == pengguna.PenggunaId).ToList();
 
                 foreach (var userRole in userRoles)
                 {
-                    var role = db.Roles.Where(o => o.Id == userRole.RoleId).FirstOrDefault();
+                    var role = db.Roles.Where(o => o.RoleId == userRole.RoleId).FirstOrDefault();
                     if (role != null)
                     {
                         claims.Add(new Claim(ClaimTypes.Role, role.Name));
@@ -127,7 +127,7 @@ namespace PenggunaAPI.GraphQL
             return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
         }
 
-        [Authorize(Roles = new[] { "Pengguna"})]
+        [Authorize(Roles = new[] { "Pengguna" })]
         public async Task<Status> OrderAsync(
             OrderInput input,
             [Service] PenggunaDbContext db,
@@ -135,18 +135,28 @@ namespace PenggunaAPI.GraphQL
         )
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
+            var d1 = currentPengguna.Latitude * (Math.PI / 180.0);
+            var num1 = currentPengguna.Longitude * (Math.PI / 180.0);
+            var d2 = input.LatTujuan * (Math.PI / 180.0);
+            var num2 = input.LongTujuan * (Math.PI / 180.0) - num1;
+            var d3 = Math.Pow(Math.Sin((d2 - d1) / 2.0), 2.0) +
+                     Math.Cos(d1) * Math.Cos(d2) * Math.Pow(Math.Sin(num2 / 2.0), 2.0);
+            var distance = 6378.137 * (2.0 * Math.Atan2(Math.Sqrt(d3), Math.Sqrt(1.0 - d3)));
+            float price = (float)distance * 1;
+
             var newOrder = new Order
             {
                 DriverId = null,
-                PenggunaId = penggunaId,
-                LatPengguna = input.LatPengguna,
-                LongPengguna = input.LongPengguna,
+                PenggunaId = currentPengguna.PenggunaId,
+                LatPengguna = currentPengguna.Latitude,
+                LongPengguna = currentPengguna.Longitude,
                 LatDriver = null,
                 LongDriver = null,
                 LatTujuan = input.LatTujuan,
                 LongTujuan = input.LongTujuan,
                 Created = DateTime.Now,
-                Price = null,
+                Price = price,
                 Status = "Pending"
             };
             Console.WriteLine(newOrder.PenggunaId);

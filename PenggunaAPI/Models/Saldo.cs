@@ -9,7 +9,7 @@ namespace PenggunaAPI.Models
     public class Saldo
     {
         [Key]
-        public int Id { get; set; }
+        public int SaldoId { get; set; }
         public int PenggunaId { get; set; }
         public float TotalSaldo { get; set; }
         public float TopUpSaldo { get; set; }

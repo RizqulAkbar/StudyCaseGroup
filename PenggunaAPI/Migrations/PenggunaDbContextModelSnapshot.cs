@@ -21,7 +21,7 @@ namespace PenggunaAPI.Migrations
 
             modelBuilder.Entity("PenggunaAPI.Models.Order", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("OrderId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
@@ -59,7 +59,7 @@ namespace PenggunaAPI.Migrations
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("OrderId");
 
                     b.HasIndex("PenggunaId");
 
@@ -68,7 +68,7 @@ namespace PenggunaAPI.Migrations
 
             modelBuilder.Entity("PenggunaAPI.Models.Pengguna", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("PenggunaId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
@@ -100,14 +100,14 @@ namespace PenggunaAPI.Migrations
                     b.Property<bool>("isLocked")
                         .HasColumnType("bit");
 
-                    b.HasKey("Id");
+                    b.HasKey("PenggunaId");
 
                     b.ToTable("Penggunas");
                 });
 
             modelBuilder.Entity("PenggunaAPI.Models.Price", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("PriceId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
@@ -115,14 +115,14 @@ namespace PenggunaAPI.Migrations
                     b.Property<float>("PricePerKm")
                         .HasColumnType("real");
 
-                    b.HasKey("Id");
+                    b.HasKey("PriceId");
 
                     b.ToTable("Prices");
                 });
 
             modelBuilder.Entity("PenggunaAPI.Models.Role", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("RoleId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
@@ -130,14 +130,14 @@ namespace PenggunaAPI.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("RoleId");
 
                     b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("PenggunaAPI.Models.Saldo", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("SaldoId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
@@ -154,7 +154,7 @@ namespace PenggunaAPI.Migrations
                     b.Property<float>("TotalSaldo")
                         .HasColumnType("real");
 
-                    b.HasKey("Id");
+                    b.HasKey("SaldoId");
 
                     b.HasIndex("PenggunaId")
                         .IsUnique();
@@ -164,7 +164,7 @@ namespace PenggunaAPI.Migrations
 
             modelBuilder.Entity("PenggunaAPI.Models.UserRole", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("UserRoleId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
@@ -175,7 +175,7 @@ namespace PenggunaAPI.Migrations
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserRoleId");
 
                     b.HasIndex("PenggunaId");
 

@@ -9,7 +9,7 @@ namespace PenggunaAPI.Models
     public class Order
     {
         [Key]
-        public int Id { get; set; }
+        public int OrderId { get; set; }
         public int? DriverId { get; set; }
         public int PenggunaId { get; set; }
         public double LatPengguna { get; set; }
