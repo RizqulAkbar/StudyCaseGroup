@@ -12,7 +12,7 @@ namespace PenggunaAPI.Models
         public int SaldoId { get; set; }
         public int PenggunaId { get; set; }
         public float TotalSaldo { get; set; }
-        public List<float>? MutasiSaldo { get; set; }
+        public float? MutasiSaldo { get; set; }
         public DateTime Created { get; set; }
         public Pengguna Pengguna { get; set; }
     }

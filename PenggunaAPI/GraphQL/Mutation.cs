@@ -181,9 +181,7 @@ namespace PenggunaAPI.GraphQL
                 if (saldo != null)
                 {
                     saldo.TotalSaldo = saldo.TotalSaldo - price;
-                    List<float> priceList = new List<float>();
-                    priceList.Add(-price);
-                    saldo.MutasiSaldo = priceList;
+                    saldo.MutasiSaldo = -price;
 
                     db.Saldos.Update(saldo);
                     await db.SaveChangesAsync();
@@ -208,9 +206,7 @@ namespace PenggunaAPI.GraphQL
             if (saldo != null)
             {
                 saldo.TotalSaldo = saldo.TotalSaldo + topUp;
-                List<float> topUpList = new List<float>();
-                topUpList.Add(topUp);
-                saldo.MutasiSaldo = topUpList;
+                saldo.MutasiSaldo = topUp;
 
                 db.Saldos.Update(saldo);
                 await db.SaveChangesAsync();
