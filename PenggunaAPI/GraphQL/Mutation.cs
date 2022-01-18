@@ -6,6 +6,8 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using HotChocolate;
+using HotChocolate.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using PenggunaAPI.Auth;
@@ -125,16 +127,18 @@ namespace PenggunaAPI.GraphQL
             return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
         }
 
+        [Authorize]
         public async Task<Status> OrderAsync(
             OrderInput input,
-            [Service] PenggunaDbContext db
+            [Service] PenggunaDbContext db,
+            [Service] IHttpContextAccessor httpContextAccessor
         )
         {
-            // var pengguna = db.Penggunas.Where(o=>o.)
+            var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var newOrder = new Order
             {
                 DriverId = null,
-                PenggunaId = input.PenggunaId,
+                PenggunaId = penggunaId,
                 LatPengguna = input.LatPengguna,
                 LongPengguna = input.LongPengguna,
                 LatDriver = null,
@@ -145,6 +149,7 @@ namespace PenggunaAPI.GraphQL
                 Price = null,
                 Status = "Pending"
             };
+            Console.WriteLine(newOrder.PenggunaId);
             db.Orders.Add(newOrder);
             await db.SaveChangesAsync();
             return new Status(true, "Order Success, please wait your driver to pick you up");
