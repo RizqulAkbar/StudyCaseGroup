@@ -97,6 +97,7 @@ namespace PenggunaAPI.GraphQL
 
                 var claims = new List<Claim>();
                 claims.Add(new Claim(ClaimTypes.Name, pengguna.Username));
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, pengguna.Id.ToString()));
                 var userRoles = db.UserRoles.Where(o => o.PenggunaId == pengguna.Id).ToList();
 
                 foreach (var userRole in userRoles)
