@@ -44,6 +44,16 @@ namespace PenggunaAPI.GraphQL
             };
             db.Penggunas.Add(newPengguna);
             await db.SaveChangesAsync();
+            var currentPengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
+
+            var newSaldo = new Saldo
+            {
+                PenggunaId = currentPengguna.PenggunaId,
+                TotalSaldo = input.Saldo,
+                Created = DateTime.Now
+            };
+            db.Saldos.Add(newSaldo);
+            await db.SaveChangesAsync();
 
             var role = db.Roles.Where(o => o.Name == "Pengguna").FirstOrDefault();
             if (role == null)
@@ -56,7 +66,6 @@ namespace PenggunaAPI.GraphQL
                 await db.SaveChangesAsync();
             }
 
-            var currentPengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
             var currentRole = db.Roles.Where(o => o.Name == "Pengguna").FirstOrDefault();
             var newUserRole = new UserRole
             {
@@ -65,7 +74,7 @@ namespace PenggunaAPI.GraphQL
             };
             db.UserRoles.Add(newUserRole);
             await db.SaveChangesAsync();
-            return new Status(true, "New Pengguna Registration Success");
+            return new Status(true, "New Pengguna Registration Successful");
 
 
             // var key = "User-Add-" + DateTime.Now.ToString();
@@ -136,6 +145,7 @@ namespace PenggunaAPI.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
+            var pricePerKm = db.Prices.FirstOrDefault();
             var d1 = currentPengguna.Latitude * (Math.PI / 180.0);
             var num1 = currentPengguna.Longitude * (Math.PI / 180.0);
             var d2 = input.LatTujuan * (Math.PI / 180.0);
@@ -159,10 +169,33 @@ namespace PenggunaAPI.GraphQL
                 Price = price,
                 Status = "Pending"
             };
-            Console.WriteLine(newOrder.PenggunaId);
             db.Orders.Add(newOrder);
             await db.SaveChangesAsync();
-            return new Status(true, "Order Success, please wait your driver to pick you up");
+            return new Status(true, "Order Successful, please check your order fee");
+        }
+
+        public async Task<Status> TopUpAsync(
+            float topUp,
+            [Service] PenggunaDbContext db,
+            [Service] IHttpContextAccessor httpContextAccessor
+        )
+        {
+            var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
+            var saldo = db.Saldos.Where(o=>o.PenggunaId == currentPengguna.PenggunaId).FirstOrDefault();
+            if (saldo!=null)
+            {
+                saldo.TotalSaldo = saldo.TotalSaldo+topUp;
+                saldo.MutasiSaldo = topUp;
+
+                db.Saldos.Update(saldo);
+                await db.SaveChangesAsync();
+                return new Status(true,$"Top Up Successful, {topUp} has been added to your balance");
+            }
+            else
+            {
+                return new Status(false,"Top Up Failed");
+            }
         }
     }
 }

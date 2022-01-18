@@ -8,6 +8,7 @@ namespace PenggunaAPI.InputMutation
         string Username,
         string Password,
         double Latitude,
-        double Longitude
+        double Longitude,
+        float Saldo
     );
 }
