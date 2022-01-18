@@ -7,7 +7,6 @@ namespace PenggunaAPI.InputMutation
 {
     public record OrderInput
     (
-        int PenggunaId,
         double LatPengguna,
         double LongPengguna,
         double LatTujuan,
