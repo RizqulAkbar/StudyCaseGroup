@@ -177,7 +177,7 @@ namespace PenggunaAPI.GraphQL
                 db.Orders.Add(newOrder);
                 await db.SaveChangesAsync();
 
-                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(d => d.Created).FirstOrDefault();
+                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderByDescending(d => d.SaldoId).FirstOrDefault();
                 var newSaldo = new Saldo()
                 {
                     PenggunaId = currentPengguna.PenggunaId,
@@ -204,7 +204,7 @@ namespace PenggunaAPI.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(d => d.Created).FirstOrDefault();
+            var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderByDescending(d => d.SaldoId).FirstOrDefault();
             if (oldSaldo != null)
             {
                 var newSaldo = new Saldo()
