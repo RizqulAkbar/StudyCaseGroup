@@ -105,6 +105,21 @@ namespace PenggunaAPI.Migrations
                     b.ToTable("Penggunas");
                 });
 
+            modelBuilder.Entity("PenggunaAPI.Models.Price", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<float>("PricePerKm")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Prices");
+                });
+
             modelBuilder.Entity("PenggunaAPI.Models.Role", b =>
                 {
                     b.Property<int>("Id")

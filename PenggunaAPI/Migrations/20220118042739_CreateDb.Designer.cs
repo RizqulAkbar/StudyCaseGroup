@@ -10,7 +10,7 @@ using PenggunaAPI.Data;
 namespace PenggunaAPI.Migrations
 {
     [DbContext(typeof(PenggunaDbContext))]
-    [Migration("20220118042108_CreateDb")]
+    [Migration("20220118042739_CreateDb")]
     partial class CreateDb
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -105,6 +105,21 @@ namespace PenggunaAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Penggunas");
+                });
+
+            modelBuilder.Entity("PenggunaAPI.Models.Price", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<float>("PricePerKm")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Prices");
                 });
 
             modelBuilder.Entity("PenggunaAPI.Models.Role", b =>
