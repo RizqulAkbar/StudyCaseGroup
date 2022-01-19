@@ -7,10 +7,8 @@ namespace PenggunaAPI.OutputQuery
 {
     public class OrderFee
     {
-        public int OrderId { get; set; }
         public int PenggunaId { get; set; }
+        public float Fee { get; set; }
         public DateTime Created { get; set; }
-        public float Price { get; set; }
-        public string Status { get; set; }
     }
 }

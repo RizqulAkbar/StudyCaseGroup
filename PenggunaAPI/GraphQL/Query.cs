@@ -34,14 +34,12 @@ namespace PenggunaAPI.GraphQL
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            return db.Orders.Select(p=> new OrderFee()
+            return db.Saldos.Select(p => new OrderFee()
             {
-                OrderId = p.OrderId,
                 PenggunaId = p.PenggunaId,
+                Fee = (float)p.MutasiSaldo,
                 Created = p.Created,
-                Price = p.Price,
-                Status = p.Status
-            }).Where(o => o.PenggunaId == penggunaId && o.Status=="Pending").AsQueryable();
+            }).Where(o => o.PenggunaId == penggunaId && o.Fee < 0).OrderByDescending(c=> c.Created).AsQueryable();
         }
 
         [Authorize(Roles = new[] { "Pengguna" })]
@@ -50,7 +48,7 @@ namespace PenggunaAPI.GraphQL
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            return db.Saldos.Select(p=> new SaldoOutput()
+            return db.Saldos.Select(p => new SaldoOutput()
             {
                 SaldoId = p.SaldoId,
                 PenggunaId = p.PenggunaId,
@@ -60,13 +58,13 @@ namespace PenggunaAPI.GraphQL
             }).Where(o => o.PenggunaId == penggunaId).ToList();
         }
 
-         [Authorize(Roles = new[] { "Pengguna" })]
+        [Authorize(Roles = new[] { "Pengguna" })]
         public IEnumerable<OrderHistory> GetOrderHistory(
-            [Service] PenggunaDbContext db,
-            [Service] IHttpContextAccessor httpContextAccessor)
+           [Service] PenggunaDbContext db,
+           [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            return db.Orders.Select(p=> new OrderHistory()
+            return db.Orders.Select(p => new OrderHistory()
             {
                 OrderId = p.OrderId,
                 DriverId = (int)p.DriverId,
@@ -76,7 +74,7 @@ namespace PenggunaAPI.GraphQL
                 Created = p.Created,
                 Price = p.Price,
                 Status = p.Status
-            }).Where(o => o.PenggunaId == penggunaId && o.Status=="Completed").AsQueryable();
+            }).Where(o => o.PenggunaId == penggunaId && o.Status == "Completed").AsQueryable();
         }
     }
 }
