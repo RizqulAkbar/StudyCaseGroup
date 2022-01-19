@@ -18,9 +18,9 @@ namespace DriverService.Models
         public string Lastname { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public double LatPengguna { get; set; }
-        public double LongPengguna { get; set; }
-        public bool Status { get; set; }
+        public float LatPengguna { get; set; }
+        public float LongPengguna { get; set; }
+        public bool Lock { get; set; }
 
         public virtual ICollection<Order> Orders { get; set; }
     }

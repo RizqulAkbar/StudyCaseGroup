@@ -19,5 +19,11 @@ namespace DriverService.GraphQL
         {
             return context.SaldoDrivers.Where(p => p.SaldoId == id);
         }
+
+        public IQueryable<PriceAdmin> GetPriceAdmin(
+            [Service] StudyCaseGroupContext context)
+        {
+            return context.PriceAdmins;
+        }
     }
 }

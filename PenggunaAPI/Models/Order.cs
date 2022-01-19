@@ -19,7 +19,7 @@ namespace PenggunaAPI.Models
         public double LatTujuan { get; set; }
         public double LongTujuan { get; set; }
         public DateTime Created { get; set; }
-        public float? Price { get; set; }
+        public float Price { get; set; }
         public string Status { get; set; }
         public Pengguna Pengguna { get; set; }
     }

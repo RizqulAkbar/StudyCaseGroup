@@ -10,7 +10,7 @@ using PenggunaAPI.Data;
 namespace PenggunaAPI.Migrations
 {
     [DbContext(typeof(PenggunaDbContext))]
-    [Migration("20220118091755_CreateDb")]
+    [Migration("20220118131954_CreateDb")]
     partial class CreateDb
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -55,7 +55,7 @@ namespace PenggunaAPI.Migrations
                     b.Property<int>("PenggunaId")
                         .HasColumnType("int");
 
-                    b.Property<float?>("Price")
+                    b.Property<float>("Price")
                         .HasColumnType("real");
 
                     b.Property<string>("Status")
@@ -158,8 +158,7 @@ namespace PenggunaAPI.Migrations
 
                     b.HasKey("SaldoId");
 
-                    b.HasIndex("PenggunaId")
-                        .IsUnique();
+                    b.HasIndex("PenggunaId");
 
                     b.ToTable("Saldos");
                 });
@@ -200,8 +199,8 @@ namespace PenggunaAPI.Migrations
             modelBuilder.Entity("PenggunaAPI.Models.Saldo", b =>
                 {
                     b.HasOne("PenggunaAPI.Models.Pengguna", "Pengguna")
-                        .WithOne("Saldo")
-                        .HasForeignKey("PenggunaAPI.Models.Saldo", "PenggunaId")
+                        .WithMany("Saldo")
+                        .HasForeignKey("PenggunaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
