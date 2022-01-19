@@ -10,7 +10,7 @@ namespace DriverService.Models
         public int SaldoId { get; set; }
         public int DriverId { get; set; }
         public float TotalSaldo { get; set; }
-        public float SelisihSaldo { get; set; }
+        public float MutasiSaldo { get; set; }
         public DateTime Created { get; set; }
 
         public virtual UserDriver Driver { get; set; }
