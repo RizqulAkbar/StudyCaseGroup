@@ -9,6 +9,10 @@ namespace PenggunaAPI.Data
 {
     public class PenggunaDbContext : DbContext
     {
+        public PenggunaDbContext()
+        {
+            
+        }
         public PenggunaDbContext(DbContextOptions options) : base(options)
         {
 
