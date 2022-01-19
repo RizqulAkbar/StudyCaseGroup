@@ -55,7 +55,7 @@ namespace PenggunaAPI.GraphQL
                 TotalSaldo = p.TotalSaldo,
                 MutasiSaldo = p.MutasiSaldo,
                 Created = p.Created
-            }).Where(o => o.PenggunaId == penggunaId).ToList();
+            }).Where(o => o.PenggunaId == penggunaId).OrderByDescending(o=>o.SaldoId).ToList();
         }
 
         [Authorize(Roles = new[] { "Pengguna" })]

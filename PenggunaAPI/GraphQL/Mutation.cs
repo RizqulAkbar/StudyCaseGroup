@@ -141,7 +141,7 @@ namespace PenggunaAPI.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var currentSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).LastOrDefault();
+            var currentSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o=>o.SaldoId).LastOrDefault();
             var pricePerKm = db.Prices.FirstOrDefault();
 
             var d1 = currentPengguna.Latitude * (Math.PI / 180.0);
@@ -175,7 +175,7 @@ namespace PenggunaAPI.GraphQL
                 var val = JObject.FromObject(newOrder).ToString(Formatting.None);
                 await KafkaHelper.SendMessage(kafkaSettings.Value, "Order", key, val);
 
-                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).LastOrDefault();
+                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o=>o.SaldoId).LastOrDefault();
                 var newSaldo = new Saldo()
                 {
                     PenggunaId = currentPengguna.PenggunaId,
@@ -202,7 +202,7 @@ namespace PenggunaAPI.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).LastOrDefault();
+            var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o=>o.SaldoId).LastOrDefault();
             if (oldSaldo != null)
             {
                 var newSaldo = new Saldo()
