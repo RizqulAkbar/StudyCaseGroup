@@ -45,7 +45,7 @@ namespace PenggunaAPI.GraphQL
         }
 
         [Authorize(Roles = new[] { "Pengguna" })]
-        public IEnumerable<SaldoOutput> GetSaldo(
+        public IEnumerable<SaldoOutput> GetSaldos(
             [Service] PenggunaDbContext db,
             [Service] IHttpContextAccessor httpContextAccessor)
         {
@@ -58,6 +58,25 @@ namespace PenggunaAPI.GraphQL
                 MutasiSaldo = p.MutasiSaldo,
                 Created = p.Created
             }).Where(o => o.PenggunaId == penggunaId).ToList();
+        }
+
+         [Authorize(Roles = new[] { "Pengguna" })]
+        public IEnumerable<OrderHistory> GetOrderHistory(
+            [Service] PenggunaDbContext db,
+            [Service] IHttpContextAccessor httpContextAccessor)
+        {
+            var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            return db.Orders.Select(p=> new OrderHistory()
+            {
+                OrderId = p.OrderId,
+                DriverId = (int)p.DriverId,
+                PenggunaId = p.PenggunaId,
+                StartingLocation = $"Lat: {p.LatPengguna.ToString()}, Long: {p.LongPengguna.ToString()}",
+                Destination = $"Lat: {p.LatTujuan.ToString()}, Long: {p.LongTujuan.ToString()}",
+                Created = p.Created,
+                Price = p.Price,
+                Status = p.Status
+            }).Where(o => o.PenggunaId == penggunaId && o.Status=="Completed").AsQueryable();
         }
     }
 }
