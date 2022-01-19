@@ -34,30 +34,47 @@ namespace PenggunaAPI.GraphQL
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            return db.Orders.Select(p=> new OrderFee()
+            return db.Saldos.Select(p => new OrderFee()
             {
-                OrderId = p.OrderId,
                 PenggunaId = p.PenggunaId,
+                Fee = (float)p.MutasiSaldo,
                 Created = p.Created,
-                Price = p.Price,
-                Status = p.Status
-            }).Where(o => o.PenggunaId == penggunaId && o.Status=="Pending").AsQueryable();
+            }).Where(o => o.PenggunaId == penggunaId && o.Fee < 0).OrderByDescending(c=> c.Created).AsQueryable();
         }
 
         [Authorize(Roles = new[] { "Pengguna" })]
-        public IEnumerable<SaldoOutput> GetSaldo(
+        public IEnumerable<SaldoOutput> GetSaldos(
             [Service] PenggunaDbContext db,
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            return db.Saldos.Select(p=> new SaldoOutput()
+            return db.Saldos.Select(p => new SaldoOutput()
             {
                 SaldoId = p.SaldoId,
                 PenggunaId = p.PenggunaId,
                 TotalSaldo = p.TotalSaldo,
                 MutasiSaldo = p.MutasiSaldo,
                 Created = p.Created
-            }).Where(o => o.PenggunaId == penggunaId).ToList();
+            }).Where(o => o.PenggunaId == penggunaId).OrderByDescending(o=>o.SaldoId).ToList();
+        }
+
+        [Authorize(Roles = new[] { "Pengguna" })]
+        public IEnumerable<OrderHistory> GetOrderHistory(
+           [Service] PenggunaDbContext db,
+           [Service] IHttpContextAccessor httpContextAccessor)
+        {
+            var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            return db.Orders.Select(p => new OrderHistory()
+            {
+                OrderId = p.OrderId,
+                DriverId = (int)p.DriverId,
+                PenggunaId = p.PenggunaId,
+                StartingLocation = $"Lat: {p.LatPengguna.ToString()}, Long: {p.LongPengguna.ToString()}",
+                Destination = $"Lat: {p.LatTujuan.ToString()}, Long: {p.LongTujuan.ToString()}",
+                Created = p.Created,
+                Price = p.Price,
+                Status = p.Status
+            }).Where(o => o.PenggunaId == penggunaId && o.Status == "Completed").AsQueryable();
         }
     }
 }

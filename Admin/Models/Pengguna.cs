@@ -15,7 +15,8 @@ namespace Admin.Models
         public string Password { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
-        public DateTime Created { get; set; }
         public bool IsLocked { get; set; }
+        public DateTime Created { get; set; }
+        public DateTime Updated { get; set; }
     }
 }

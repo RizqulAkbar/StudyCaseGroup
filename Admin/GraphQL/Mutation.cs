@@ -79,27 +79,28 @@ namespace Admin.GraphQL
             });
         }
 
-        public async Task<UserToken> LoginAsync(
-           LoginUserDto input,
+        public async Task<UserToken> LoginPenggunaAsync(
+           LoginPenggunaDto input,
            [Service] IOptions<TokenSettings> tokenSettings,
            [Service] OjegDbContext context)
         {
-            var user = context.Users.Where(o => o.Username == input.Username).FirstOrDefault();
-            if (user == null)
+            var pengguna = context.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
+            if (pengguna == null)
             {
                 return await Task.FromResult(new UserToken(null, null, "Username or password was invalid"));
             }
-            bool valid = BCrypt.Net.BCrypt.Verify(input.Password, user.Password);
+            bool valid = BCrypt.Net.BCrypt.Verify(input.Password, pengguna.Password);
             if (valid)
             {
                 var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSettings.Value.Key));
                 var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
 
                 //Add Claim (User role)
+            /*
                 var claims = new List<Claim>();
-                claims.Add(new Claim(ClaimTypes.Name, user.Username));
+                claims.Add(new Claim(ClaimTypes.Name, pengguna.Username));
 
-                var userRoles = context.UserRoles.Where(o => o.UserId == user.Id).ToList();
+                var userRoles = context.UserRoles.Where(o => o.UserId == pengguna.Id).ToList();
 
                 foreach (var userRole in userRoles)
                 {
@@ -109,13 +110,13 @@ namespace Admin.GraphQL
                         claims.Add(new Claim(ClaimTypes.Role, role.Name));
                     }
                 }
-
+            */
                 var expired = DateTime.Now.AddHours(3);
                 var jwtToken = new JwtSecurityToken(
                     issuer: tokenSettings.Value.Issuer,
                     audience: tokenSettings.Value.Audience,
                     expires: expired,
-                    claims: claims,
+                    //claims: claims,
                     signingCredentials: credentials
                 );
 
@@ -190,6 +191,40 @@ namespace Admin.GraphQL
             }
 
             return new PricePayload(price);
+        }
+
+        public async Task<UpdatePenggunaPayload> UpdatePasswordPenggunaAsync(
+            int id,
+            UpdatePenggunaDto input,
+            [Service] OjegDbContext context)
+        {
+            var pengguna = context.Penggunas.Where(o => o.Id == id).FirstOrDefault();
+            if (pengguna != null)
+            {
+                pengguna.Password = BCrypt.Net.BCrypt.HashPassword(input.Password);
+                pengguna.Updated = DateTime.Now;
+
+                await context.SaveChangesAsync();
+            }
+
+            return new UpdatePenggunaPayload(pengguna);
+        }
+
+        public async Task<UpdateDriverPayload> UpdatePasswordDriverAsync(
+            int id,
+            UpdateDriverDto input,
+            [Service] OjegDbContext context)
+        {
+            var driver = context.UserDrivers.Where(o => o.DriverId == id).FirstOrDefault();
+            if (driver != null)
+            {
+                driver.Password = BCrypt.Net.BCrypt.HashPassword(input.Password);
+                driver.Updated = DateTime.Now;
+
+                await context.SaveChangesAsync();
+            }
+
+            return new UpdateDriverPayload(driver);
         }
 
     }

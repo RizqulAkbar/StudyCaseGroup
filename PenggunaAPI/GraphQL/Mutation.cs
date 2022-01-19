@@ -4,15 +4,21 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Confluent.Kafka;
 using HotChocolate;
 using HotChocolate.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PenggunaAPI.Auth;
 using PenggunaAPI.Data;
 using PenggunaAPI.InputMutation;
+using PenggunaAPI.Kafka;
 using PenggunaAPI.Models;
 using PenggunaAPI.OutputMutation;
 
@@ -76,18 +82,6 @@ namespace PenggunaAPI.GraphQL
             db.UserRoles.Add(newUserRole);
             await db.SaveChangesAsync();
             return new Status(true, "New Pengguna Registration Successful");
-
-
-            // var key = "User-Add-" + DateTime.Now.ToString();
-            // var val = JObject.FromObject(newUser).ToString(Formatting.None);
-            // var result = await KafkaHelper.SendMessage(kafkaSettings.Value, "User", key, val);
-            // await KafkaHelper.SendMessage(kafkaSettings.Value, "Logging", key, val);
-
-            // var ret = new TransactionStatus(result, "");
-            // if (!result)
-            //     ret = new TransactionStatus(result, "Failed to submit data");
-
-            // return await Task.FromResult(ret);
         }
 
         public async Task<TokenPengguna> LoginAsync(
@@ -141,12 +135,13 @@ namespace PenggunaAPI.GraphQL
         public async Task<Status> OrderAsync(
             OrderInput input,
             [Service] PenggunaDbContext db,
-            [Service] IHttpContextAccessor httpContextAccessor
+            [Service] IHttpContextAccessor httpContextAccessor,
+            [Service] IOptions<KafkaSettings> kafkaSettings
         )
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var currentSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).FirstOrDefault();
+            var currentSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
             var pricePerKm = db.Prices.FirstOrDefault();
 
             var d1 = currentPengguna.Latitude * (Math.PI / 180.0);
@@ -174,10 +169,13 @@ namespace PenggunaAPI.GraphQL
                     Price = price,
                     Status = "Pending"
                 };
-                db.Orders.Add(newOrder);
-                await db.SaveChangesAsync();
+                // db.Orders.Add(newOrder);
+                // await db.SaveChangesAsync();
+                var key = "New Order - " + DateTime.Now.ToString();
+                var val = JObject.FromObject(newOrder).ToString(Formatting.None);
+                await KafkaHelper.SendMessage(kafkaSettings.Value, "Order", key, val);
 
-                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderByDescending(d => d.SaldoId).FirstOrDefault();
+                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
                 var newSaldo = new Saldo()
                 {
                     PenggunaId = currentPengguna.PenggunaId,
@@ -187,7 +185,7 @@ namespace PenggunaAPI.GraphQL
                 };
                 db.Saldos.Add(newSaldo);
                 await db.SaveChangesAsync();
-                return new Status(true, "Order Successful, please check your order fee");
+                return new Status(true, $"Order Successful, your order fee: {price.ToString()}");
             }
             else
             {
@@ -204,7 +202,7 @@ namespace PenggunaAPI.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderByDescending(d => d.SaldoId).FirstOrDefault();
+            var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
             if (oldSaldo != null)
             {
                 var newSaldo = new Saldo()
@@ -222,6 +220,80 @@ namespace PenggunaAPI.GraphQL
             {
                 return new Status(false, "Top Up Failed");
             }
+        }
+
+        [Authorize(Roles = new[] { "Pengguna" })]
+        public async Task<Status> CancelOrderAsync(
+            [Service] PenggunaDbContext db,
+            [Service] IHttpContextAccessor httpContextAccessor
+        )
+        {
+            var builder = new ConfigurationBuilder()
+                    .AddJsonFile($"appsettings.json", true, true);
+
+            var config = builder.Build();
+
+
+            var Serverconfig = new ConsumerConfig
+            {
+                BootstrapServers = config["KafkaSettings:Server"],
+                GroupId = "Order",
+                AutoOffsetReset = AutoOffsetReset.Earliest
+            };
+            CancellationTokenSource cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (_, e) =>
+            {
+                e.Cancel = true; // prevent the process from terminating.
+                cts.Cancel();
+            };
+            Console.WriteLine("=================Cancelling Your Order=================");
+            using (var consumer = new ConsumerBuilder<string, string>(Serverconfig).Build())
+            {
+                var topics = new string[] { "Order" };
+                consumer.Subscribe(topics);
+                try
+                {
+                    var cr = consumer.Consume(cts.Token);
+                    Console.WriteLine($"Consumed record with Topic: {cr.Topic} key: {cr.Message.Key} and value: {cr.Message.Value}");
+
+                    if (cr.Topic == "Order")
+                    {
+                        Order order = JsonConvert.DeserializeObject<Order>(cr.Message.Value);
+                        order.Status = "Cancelled";
+                        db.Orders.Add(order);
+                    }
+                    var cancel = await db.SaveChangesAsync();
+                    Console.WriteLine("--> Data was saved into database");
+                    Console.WriteLine("--> Your order was cancelled");
+                    if (cancel > 0)
+                    {
+                        var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                        var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
+                        var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+                        if (oldSaldo != null)
+                        {
+                            var newSaldo = new Saldo()
+                            {
+                                PenggunaId = currentPengguna.PenggunaId,
+                                TotalSaldo = oldSaldo.TotalSaldo - (float)oldSaldo.MutasiSaldo,
+                                MutasiSaldo = -oldSaldo.MutasiSaldo,
+                                Created = DateTime.Now
+                            };
+                            db.Saldos.Add(newSaldo);
+                            await db.SaveChangesAsync();
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // Ctrl-C was pressed.
+                }
+                finally
+                {
+                    consumer.Close();
+                }
+            }
+            return new Status(true, "Order was cancelled");
         }
     }
 }
