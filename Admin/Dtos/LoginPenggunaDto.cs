@@ -1,6 +1,6 @@
 ﻿namespace Admin.Dtos
 {
-    public record LoginUserDto
+    public record LoginPenggunaDto
     (
         string Username,
         string Password,

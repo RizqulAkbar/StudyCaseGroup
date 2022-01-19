@@ -17,5 +17,7 @@ namespace Admin.Models
         public double LongDriver { get; set; }
         public bool Lock { get; set; }
         public bool Approved { get; set; }
+        public DateTime Created { get; set; }
+        public DateTime Updated { get; set; }
     }
 }
