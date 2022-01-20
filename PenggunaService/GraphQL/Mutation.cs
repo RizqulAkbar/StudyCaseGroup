@@ -212,23 +212,24 @@ namespace PenggunaService.GraphQL
                 var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
                 var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
                 var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+                var refund = db.Orders.Where(o => o.PenggunaId == currentPengguna.PenggunaId && o.OrderId == cancel).FirstOrDefault();
                 if (oldSaldo != null)
                 {
                     var newSaldo = new Saldo()
                     {
                         PenggunaId = currentPengguna.PenggunaId,
-                        TotalSaldo = oldSaldo.TotalSaldo - (float)oldSaldo.MutasiSaldo,
-                        MutasiSaldo = -oldSaldo.MutasiSaldo,
+                        TotalSaldo = oldSaldo.TotalSaldo + refund.Price,
+                        MutasiSaldo = refund.Price,
                         Created = DateTime.Now
                     };
                     db.Saldos.Add(newSaldo);
                     await db.SaveChangesAsync();
                 }
-                return new Status(true, "Order was cancelled, your balance has refunded");
+                return new Status(true, $"OrderId: {cancel.ToString()}was cancelled, your balance has refunded");
             }
             else
             {
-                return new Status(false, "Order was cancelled, failed to refund your balance");
+                return new Status(false, $"OrderId: {cancel.ToString()}was cancelled, failed to refund your balance");
             }
         }
     }

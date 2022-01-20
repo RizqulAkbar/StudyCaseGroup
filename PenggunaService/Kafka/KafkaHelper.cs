@@ -74,7 +74,7 @@ namespace PenggunaService.Kafka
 
         public static async Task<int> CancelOrder(KafkaSettings settings, PenggunaDbContext db)
         {
-            var succeed = 0;
+            var orderId = 0;
             var Serverconfig = new ConsumerConfig
             {
                 BootstrapServers = settings.Server,
@@ -97,35 +97,16 @@ namespace PenggunaService.Kafka
                     var cr = consumer.Consume(cts.Token);
                     Console.WriteLine($"Consumed record with Topic: {cr.Topic} key: {cr.Message.Key} and value: {cr.Message.Value}");
 
-                        if (cr.Topic == "Order")
-                        {
-                            Order order = JsonConvert.DeserializeObject<Order>(cr.Message.Value);
-                            order.Status = "Cancelled";
-                            db.Orders.Add(order);
-                        }
-                        var cancel = await db.SaveChangesAsync();
-                        Console.WriteLine("--> Data was saved into database");
-                        Console.WriteLine("--> Your order was cancelled");
-                        // if (cancel > 0)
-                        // {
-                        //     var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-                        //     var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-                        //     var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
-                        //     if (oldSaldo != null)
-                        //     {
-                        //         var newSaldo = new Saldo()
-                        //         {
-                        //             PenggunaId = currentPengguna.PenggunaId,
-                        //             TotalSaldo = oldSaldo.TotalSaldo - (float)oldSaldo.MutasiSaldo,
-                        //             MutasiSaldo = -oldSaldo.MutasiSaldo,
-                        //             Created = DateTime.Now
-                        //         };
-                        //         db.Saldos.Add(newSaldo);
-                        //         await db.SaveChangesAsync();
-                        //     }
-                        // }
-                    
-
+                    if (cr.Topic == "Order")
+                    {
+                        Order order = JsonConvert.DeserializeObject<Order>(cr.Message.Value);
+                        order.Status = "Cancelled";
+                        db.Orders.Add(order);
+                        await db.SaveChangesAsync();
+                        orderId = order.OrderId;
+                    }
+                    Console.WriteLine("--> Data was saved into database");
+                    Console.WriteLine($"--> Your order with order id: {orderId.ToString()} was cancelled");
                 }
                 catch (OperationCanceledException)
                 {
@@ -134,10 +115,9 @@ namespace PenggunaService.Kafka
                 finally
                 {
                     consumer.Close();
-                    succeed = 1;
                 }
             }
-            return await Task.FromResult(succeed);
+            return await Task.FromResult(orderId);
         }
     }
 }
