@@ -2,7 +2,6 @@
 {
     public record SetPosition
      (
-        int DriverID,
          float LatDriver,
          float LongDriver
      );

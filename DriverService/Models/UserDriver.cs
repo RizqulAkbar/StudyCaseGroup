@@ -23,6 +23,8 @@ namespace DriverService.Models
         public double LongDriver { get; set; }
         public bool Lock { get; set; }
         public bool Approved { get; set; }
+        public DateTime Created { get; set; }
+        public DateTime Updated { get; set; }
 
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<SaldoDriver> SaldoDrivers { get; set; }

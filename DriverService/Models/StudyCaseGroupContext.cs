@@ -25,11 +25,11 @@ namespace DriverService.Models
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-//            if (!optionsBuilder.IsConfigured)
-//            {
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-//                optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS;Database=StudyCaseGroup;User ID=user;Password=password12345;");
-//            }
+            if (!optionsBuilder.IsConfigured)
+            {
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+                optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS;Database=StudyCaseGroup;User ID=user;Password=password12345;");
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -103,6 +103,8 @@ namespace DriverService.Models
 
                 entity.Property(e => e.DriverId).HasColumnName("DriverID");
 
+                entity.Property(e => e.Created).HasColumnType("datetime");
+
                 entity.Property(e => e.Email)
                     .IsRequired()
                     .HasMaxLength(50)
@@ -121,6 +123,8 @@ namespace DriverService.Models
                 entity.Property(e => e.Password)
                     .IsRequired()
                     .HasColumnType("ntext");
+
+                entity.Property(e => e.Updated).HasColumnType("datetime");
 
                 entity.Property(e => e.Username)
                     .IsRequired()

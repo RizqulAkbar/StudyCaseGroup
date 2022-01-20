@@ -1,14 +1,21 @@
-﻿using DriverService.Data;
+﻿using Confluent.Kafka;
+using DriverService.Data;
 using DriverService.Models;
 using GeoCoordinatePortable;
 using HotChocolate;
 using HotChocolate.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DriverService.GraphQL
@@ -20,32 +27,52 @@ namespace DriverService.GraphQL
         //Tambah Saldo
         [Authorize]
         public async Task<SaldoDriver> PutSaldoAsync(
-                PriceAdmin priceadmin,
-                int id,
-                [Service] StudyCaseGroupContext context)
+                [Service] StudyCaseGroupContext context,
+                [Service] IHttpContextAccessor httpContextAccessor)
         {
-            if (priceadmin == null)
+            //if (priceadmin == null)
+            //{
+            //    var price1 = new PriceAdmin
+            //    {
+            //        Price = 15000,
+            //        Created = DateTime.Now
+            //    };
+
+            //    context.PriceAdmins.Add(price1);
+            //    await context.SaveChangesAsync();
+            //}
+
+            var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var driver = context.SaldoDrivers.Where(o => o.DriverId == driverId).OrderByDescending(x => x.Created).FirstOrDefault();
+
+            if (driver == null)
             {
-                var price1 = new PriceAdmin
-                {
-                    Price = 15000,
-                    Created = DateTime.Now
-                };
-
-                context.PriceAdmins.Add(price1);
-                await context.SaveChangesAsync();
+                Console.WriteLine("Driver tidak ditemukan");
+                return null;
             }
-             
-            var driver = context.SaldoDrivers.Where(o => o.DriverId == id).OrderByDescending(x => x.Created).FirstOrDefault();
 
-            var price = context.PriceAdmins.OrderByDescending(x => x.Created).FirstOrDefault();
+            //var price = context.PriceAdmins.OrderByDescending(x => x.Created).FirstOrDefault();
 
-            var position = context.Orders.Where(o => o.DriverId == id).OrderByDescending(x => x.Created).FirstOrDefault();
+            //if (price == null)
+            //{
+            //    Console.WriteLine("Price tidak ditemukan");
+            //    return null;
+            //}
 
-            var sCoord = new GeoCoordinate(position.LatPengguna, position.LongPengguna);
-            var eCoord = new GeoCoordinate(position.LatTujuan, position.LongTujuan);
+            var order = context.Orders.Where(o => o.DriverId == driverId).OrderByDescending(x => x.Created).FirstOrDefault();
 
-            var s = sCoord.GetDistanceTo(eCoord);
+            if (order == null)
+            {
+                Console.WriteLine("Order tidak ditemukan");
+                return null;
+            }
+            Console.WriteLine(order);
+
+            //Get Distance
+            //var sCoord = new GeoCoordinate(order.LatPengguna, order.LongPengguna);
+            //var eCoord = new GeoCoordinate(order.LatTujuan, order.LongTujuan);
+
+            //var s = sCoord.GetDistanceTo(eCoord);
 
             if (driver == null)
             {
@@ -57,8 +84,8 @@ namespace DriverService.GraphQL
                 var newSaldo = new SaldoDriver
                 {
                     DriverId = driver.DriverId,
-                    SelisihSaldo = price.Price * (float)s,
-                    TotalSaldo = driver.TotalSaldo + price.Price * 80,
+                    MutasiSaldo = order.Price,
+                    TotalSaldo = driver.TotalSaldo + order.Price,
                     Created = DateTime.Now
                 };
 
@@ -73,14 +100,15 @@ namespace DriverService.GraphQL
         //Tarik saldo
         [Authorize]
         public async Task<SaldoDriver> PullSaldoAsync(
-                int id,
                 float pull,
                 PriceAdmin price,
-                [Service] StudyCaseGroupContext context)
+                [Service] StudyCaseGroupContext context,
+                [Service] IHttpContextAccessor httpContextAccessor)
         {
 
             //var driver = context.SaldoDrivers.Where(o => o.DriverId == id).FirstOrDefault();
-            var driver = context.SaldoDrivers.Where(o => o.DriverId == id).OrderByDescending(x => x.Created).FirstOrDefault();
+            var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var driver = context.SaldoDrivers.Where(o => o.DriverId == driverId).OrderByDescending(x => x.Created).FirstOrDefault();
 
             if (driver == null)
             {
@@ -92,7 +120,7 @@ namespace DriverService.GraphQL
                 var newSaldo = new SaldoDriver
                 {
                     DriverId = driver.DriverId,
-                    SelisihSaldo = price.Price * 80,
+                    MutasiSaldo = pull,
                     TotalSaldo = driver.TotalSaldo - pull,
                     Created = DateTime.Now
                 };
@@ -109,10 +137,13 @@ namespace DriverService.GraphQL
         [Authorize]
         public async Task<UserDriver> SetPositionAsync(
                 SetPosition input,
-                [Service] StudyCaseGroupContext context)
+                [Service] StudyCaseGroupContext context,
+                [Service] IHttpContextAccessor httpContextAccessor)
         {
-            
-            var positionDriver = context.UserDrivers.Where(o => o.DriverId == input.DriverID).FirstOrDefault();
+            var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var positionDriver = context.UserDrivers.Where(o => o.DriverId == driverId).FirstOrDefault();
+            Console.WriteLine(driverId);
+            Console.WriteLine(positionDriver);
             if (positionDriver != null)
             {
                 positionDriver.LatDriver = input.LatDriver;
@@ -122,7 +153,7 @@ namespace DriverService.GraphQL
                 await context.SaveChangesAsync();
             };
 
-            var positionOrders = context.Orders.Where(o => o.DriverId == input.DriverID).FirstOrDefault();
+            var positionOrders = context.Orders.Where(o => o.DriverId == driverId).FirstOrDefault();
             if (positionOrders != null)
             {
                 positionOrders.LatDriver = input.LatDriver;
@@ -139,29 +170,68 @@ namespace DriverService.GraphQL
         //Accept and finish order
 
         [Authorize]
-        public async Task<OrderOutput> AcceptOrderAsync(
-            OrderInput input,
-            [Service] StudyCaseGroupContext context)
+        public async Task<Status> AcceptOrderAsync(
+            [Service] StudyCaseGroupContext db,
+            [Service] IHttpContextAccessor httpContextAccessor
+        )
         {
-            var order = context.Orders.Where(o => o.DriverId == input.DriverID && o.PenggunaId == input.PenggunaID
-            && o.Status == "Pending").FirstOrDefault();
-            if (order != null)
+            var builder = new ConfigurationBuilder()
+                    .AddJsonFile($"appsettings.json", true, true);
+
+            var config = builder.Build();
+
+
+            var Serverconfig = new ConsumerConfig
             {
-                order.Status = "Accepted";
+                BootstrapServers = config["KafkaSettings:Server"],
+                GroupId = "Order",
+                AutoOffsetReset = AutoOffsetReset.Earliest
+            };
+            CancellationTokenSource cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (_, e) =>
+            {
+                e.Cancel = true; // prevent the process from terminating.
+                cts.Cancel();
+            };
+            Console.WriteLine("=================Accepting Order=================");
+            using (var consumer = new ConsumerBuilder<string, string>(Serverconfig).Build())
+            {
+                var topics = new string[] { "Order" };
+                consumer.Subscribe(topics);
+                try
+                {
+                    var cr = consumer.Consume(cts.Token);
+                    Console.WriteLine($"Consumed record with Topic: {cr.Topic} key: {cr.Message.Key} and value: {cr.Message.Value}");
 
-                context.Orders.Update(order);
-                await context.SaveChangesAsync();
+                    if (cr.Topic == "Order")
+                    {
+                        Order order = JsonConvert.DeserializeObject<Order>(cr.Message.Value);
+                        order.Status = "Accepted";
+                        db.Orders.Add(order);
+                    }
+                    var accept = await db.SaveChangesAsync();
+                    Console.WriteLine("--> Data was saved into database");
+                }
+                catch (OperationCanceledException)
+                {
+                    // Ctrl-C was pressed.
+                }
+                finally
+                {
+                    consumer.Close();
+                }
             }
-
-
-            return new OrderOutput(order);
+            return new Status(true, "Order is Accepted");
         }
 
+        [Authorize]
         public async Task<OrderOutput> FinishOrderAsync(
             OrderInput input,
-            [Service] StudyCaseGroupContext context)
+            [Service] StudyCaseGroupContext context,
+             [Service] IHttpContextAccessor httpContextAccessor)
         {
-            var order = context.Orders.Where(o => o.DriverId == input.DriverID && o.PenggunaId == input.PenggunaID 
+            var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var order = context.Orders.Where(o => o.DriverId == driverId && o.PenggunaId == input.PenggunaID 
             && o.Status == "Accepted").FirstOrDefault();
             if (order != null)
             {
@@ -170,7 +240,6 @@ namespace DriverService.GraphQL
                 context.Orders.Update(order);
                 await context.SaveChangesAsync();
             }
-
 
                 return new OrderOutput(order);
         }
@@ -194,7 +263,13 @@ namespace DriverService.GraphQL
                 Lastname = input.Lastname,
                 Email = input.Email,
                 Username = input.Username,
-                Password = BCrypt.Net.BCrypt.HashPassword(input.Password)
+                Password = BCrypt.Net.BCrypt.HashPassword(input.Password),
+                LatDriver = 0,
+                LongDriver = 0,
+                Lock = false,
+                Approved = true,
+                Created = DateTime.Now,
+                Updated = DateTime.Now
             };
 
             var ret = context.UserDrivers.Add(newUser);
@@ -203,7 +278,7 @@ namespace DriverService.GraphQL
             var newSaldo = new SaldoDriver
                 {
                     DriverId = newUser.DriverId,
-                    SelisihSaldo = 0,
+                    MutasiSaldo = 0,
                     TotalSaldo = 0,
                     Created = DateTime.Now
                 };
@@ -217,7 +292,9 @@ namespace DriverService.GraphQL
                 Username = newUser.Username,
                 Email = newUser.Email,
                 Firstname = newUser.Firstname,
-                Lastname = newUser.Lastname
+                Lastname = newUser.Lastname,
+                LatDriver = (float)newUser.LatDriver,
+                LongDriver = (float)newUser.LongDriver
             });
         }
 
@@ -235,6 +312,10 @@ namespace DriverService.GraphQL
             bool valid = BCrypt.Net.BCrypt.Verify(input.Password, user.Password);
             if (valid)
             {
+                var claims = new List<Claim>();
+                claims.Add(new Claim(ClaimTypes.Name, user.Username));
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, user.DriverId.ToString()));
+
                 var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSettings.Value.Key));
                 var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
 
@@ -243,13 +324,26 @@ namespace DriverService.GraphQL
                     issuer: tokenSettings.Value.Issuer,
                     audience: tokenSettings.Value.Audience,
                     expires: expired,
+                    claims: claims,
                     signingCredentials: credentials
                 );
 
-                return await Task.FromResult(
+            if (user.Lock == false && user.Approved == true)
+                {
+                    return await Task.FromResult(
                     new UserToken(new JwtSecurityTokenHandler().WriteToken(jwtToken),
                     expired.ToString(), null));
-                //return new JwtSecurityTokenHandler().WriteToken(jwtToken);
+                    //return new JwtSecurityTokenHandler().WriteToken(jwtToken);
+                }
+            else if (user.Lock == true)
+                {
+                    return await Task.FromResult(new UserToken(null, null, Message: "User locked \nPlease contact administrator"));
+                }
+            else if (user.Approved == false)
+                {
+                    return await Task.FromResult(new UserToken(null, null, Message: "User not approved\nPlease contact administrator"));
+                }
+
             }
 
             return await Task.FromResult(new UserToken(null, null, Message: "Username or password was invalid"));
