@@ -11,9 +11,7 @@ namespace PenggunaService.OutputQuery
         public string Email { get; set; }   
         public string Fullname { get; set; }
         public string Username { get; set; }
-        public string Password { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
+        public string Location { get; set; }
         public DateTime Created { get; set; }
     };
 }

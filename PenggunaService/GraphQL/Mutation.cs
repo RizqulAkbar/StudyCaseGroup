@@ -127,10 +127,10 @@ namespace PenggunaService.GraphQL
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
             var currentSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
-            var pricePerKm = db.Prices.FirstOrDefault();
+            var pricePerKm = db.Prices.OrderBy(o => o.PriceId).LastOrDefault();
 
             var distance = await LocationHelper.GetDistance(currentPengguna.Latitude, currentPengguna.Longitude, input.LatTujuan, input.LongTujuan);
-            var price = distance * 1;
+            var price = distance * pricePerKm.PricePerKm;
 
             if (currentSaldo.TotalSaldo >= price)
             {
@@ -148,8 +148,6 @@ namespace PenggunaService.GraphQL
                     Price = price,
                     Status = "Pending"
                 };
-                // db.Orders.Add(newOrder);
-                // await db.SaveChangesAsync();
                 var key = "New Order - " + DateTime.Now.ToString();
                 var val = JObject.FromObject(newOrder).ToString(Formatting.None);
                 await KafkaHelper.SendMessage(kafkaSettings.Value, "Order", key, val);

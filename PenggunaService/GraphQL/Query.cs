@@ -22,10 +22,26 @@ namespace PenggunaService.GraphQL
                 Email = p.Email,
                 Fullname = $"{p.Firstname} {p.Lastname}",
                 Username = p.Username,
-                Latitude = p.Latitude,
-                Longitude = p.Longitude,
+                Location = $"Lat: {p.Latitude.ToString()} Long: {p.Longitude.ToString()}",
                 Created = p.Created
             });
+        }
+
+        [Authorize]
+        public IQueryable<PenggunaOutput> GetSeeMyProfile(
+            [Service] PenggunaDbContext db,
+            [Service] IHttpContextAccessor httpContextAccessor)
+        {
+            var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            return db.Penggunas.Select(p => new PenggunaOutput()
+            {
+                PenggunaId = p.PenggunaId,
+                Email = p.Email,
+                Fullname = $"{p.Firstname} {p.Lastname}",
+                Username = p.Username,
+                Location = $"Lat: {p.Latitude.ToString()} Long: {p.Longitude.ToString()}",
+                Created = p.Created
+            }).Where(o=>o.PenggunaId == penggunaId);
         }
 
         [Authorize]
@@ -39,7 +55,7 @@ namespace PenggunaService.GraphQL
                 PenggunaId = p.PenggunaId,
                 Fee = (float)p.MutasiSaldo,
                 Created = p.Created,
-            }).Where(o => o.PenggunaId == penggunaId && o.Fee < 0).OrderByDescending(c=> c.Created).AsQueryable();
+            }).Where(o => o.PenggunaId == penggunaId && o.Fee < 0).OrderByDescending(c => c.Created).AsQueryable();
         }
 
         [Authorize]
@@ -55,7 +71,7 @@ namespace PenggunaService.GraphQL
                 TotalSaldo = p.TotalSaldo,
                 MutasiSaldo = p.MutasiSaldo,
                 Created = p.Created
-            }).Where(o => o.PenggunaId == penggunaId).OrderByDescending(o=>o.SaldoId).ToList();
+            }).Where(o => o.PenggunaId == penggunaId).OrderByDescending(o => o.SaldoId).ToList();
         }
 
         [Authorize]
@@ -74,7 +90,7 @@ namespace PenggunaService.GraphQL
                 Created = p.Created,
                 Price = p.Price,
                 Status = p.Status
-            }).Where(o => o.PenggunaId == penggunaId && o.Status == "Finish").AsQueryable();
+            }).Where(o => o.PenggunaId == penggunaId && o.Status == "Finished").AsQueryable();
         }
     }
 }
