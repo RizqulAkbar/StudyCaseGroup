@@ -67,7 +67,7 @@ namespace DriverService.Kafka
             return await Task.FromResult(succeed);
         }
 
-        public static async void AcceptOrder(KafkaSettings settings, StudyCaseGroupContext context)
+        public static async void AcceptOrder(KafkaSettings settings, bootcampLearnDb5Context context)
         {
             var Serverconfig = new ConsumerConfig
             {

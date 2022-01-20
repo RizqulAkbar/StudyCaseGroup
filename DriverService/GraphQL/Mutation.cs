@@ -30,8 +30,8 @@ namespace DriverService.GraphQL
         [Authorize]
         public async Task<SaldoDriver> PullSaldoAsync(
                 float pull,
-                PriceAdmin price,
-                [Service] StudyCaseGroupContext context,
+                Price price,
+                [Service] bootcampLearnDb5Context context,
                 [Service] IHttpContextAccessor httpContextAccessor)
         {
 
@@ -66,7 +66,7 @@ namespace DriverService.GraphQL
         [Authorize]
         public async Task<UserDriver> SetPositionAsync(
                 SetPosition input,
-                [Service] StudyCaseGroupContext context,
+                [Service] bootcampLearnDb5Context context,
                 [Service] IHttpContextAccessor httpContextAccessor)
         {
             var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -100,7 +100,7 @@ namespace DriverService.GraphQL
 
         [Authorize]
         public async Task<Status> AcceptOrderAsync(
-            [Service] StudyCaseGroupContext context,
+            [Service] bootcampLearnDb5Context context,
             [Service] IHttpContextAccessor httpContextAccessor,
             [Service] IOptions<KafkaSettings> kafkaSettings)
         {
@@ -146,7 +146,7 @@ namespace DriverService.GraphQL
         [Authorize]
         public async Task<OrderOutput> FinishOrderAsync(
             OrderInput input,
-            [Service] StudyCaseGroupContext context,
+            [Service] bootcampLearnDb5Context context,
              [Service] IHttpContextAccessor httpContextAccessor)
         {
             //Change status order
@@ -196,7 +196,7 @@ namespace DriverService.GraphQL
         //Register
         public async Task<UserData> RegisterAsync(
             RegisterUser input,
-            [Service] StudyCaseGroupContext context,
+            [Service] bootcampLearnDb5Context context,
             [Service] IOptions<KafkaSettings> kafkaSettings)
         {
             var user = context.UserDrivers.Where(o => o.Username == input.Username).FirstOrDefault();
@@ -250,7 +250,7 @@ namespace DriverService.GraphQL
         public async Task<UserToken> LoginAsync(
                 LoginUser input,
                 [Service] IOptions<TokenSettings> tokenSettings,
-                [Service] StudyCaseGroupContext context)
+                [Service] bootcampLearnDb5Context context)
         {
             var user = context.UserDrivers.Where(o => o.Username == input.Username).FirstOrDefault();
             if (user == null)

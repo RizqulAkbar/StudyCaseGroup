@@ -31,14 +31,14 @@ namespace DriverService
             if (_env.IsProduction())
             {
                 Console.WriteLine("--> Using Azure Database");
-                services.AddDbContext<StudyCaseGroupContext>(opt => opt.UseSqlServer(
+                services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
                     Configuration.GetConnectionString("AzureDatabase")
                 ));
             }
             else
             {
                 Console.WriteLine("--> Using Local Database");
-                services.AddDbContext<StudyCaseGroupContext>(opt => opt.UseSqlServer(
+                services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
                     Configuration.GetConnectionString("LocalDatabase")
                 ));
             }

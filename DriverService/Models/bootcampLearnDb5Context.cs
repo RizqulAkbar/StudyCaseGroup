@@ -6,29 +6,31 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace DriverService.Models
 {
-    public partial class StudyCaseGroupContext : DbContext
+    public partial class bootcampLearnDb5Context : DbContext
     {
-        public StudyCaseGroupContext()
+        public bootcampLearnDb5Context()
         {
         }
 
-        public StudyCaseGroupContext(DbContextOptions<StudyCaseGroupContext> options)
+        public bootcampLearnDb5Context(DbContextOptions<bootcampLearnDb5Context> options)
             : base(options)
         {
         }
 
         public virtual DbSet<Order> Orders { get; set; }
-        public virtual DbSet<PriceAdmin> PriceAdmins { get; set; }
+        public virtual DbSet<Pengguna> Penggunas { get; set; }
+        public virtual DbSet<Price> Prices { get; set; }
+        public virtual DbSet<Saldo> Saldos { get; set; }
         public virtual DbSet<SaldoDriver> SaldoDrivers { get; set; }
+        public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<UserDriver> UserDrivers { get; set; }
-        public virtual DbSet<UserPengguna> UserPenggunas { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS;Database=StudyCaseGroup;User ID=user;Password=password12345;");
+                optionsBuilder.UseSqlServer("Server=tcp:bootcampdb.database.windows.net;Initial Catalog=bootcampLearnDb5;User ID=bootcampdb;Password=bootcampLearnDb1;");
             }
         }
 
@@ -50,30 +52,60 @@ namespace DriverService.Models
                     .IsRequired()
                     .HasMaxLength(50)
                     .IsUnicode(false);
-
-                entity.HasOne(d => d.Driver)
-                    .WithMany(p => p.Orders)
-                    .HasForeignKey(d => d.DriverId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Orders_UserDriver");
-
-                entity.HasOne(d => d.Pengguna)
-                    .WithMany(p => p.Orders)
-                    .HasForeignKey(d => d.PenggunaId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Orders_UserPengguna");
             });
 
-            modelBuilder.Entity<PriceAdmin>(entity =>
+            modelBuilder.Entity<Pengguna>(entity =>
             {
-                entity.HasKey(e => e.PriceId)
-                    .HasName("PK_PriceAdmin1");
+                entity.Property(e => e.Created).HasColumnType("datetime");
 
-                entity.ToTable("PriceAdmin");
+                entity.Property(e => e.Email)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
 
-                entity.Property(e => e.PriceId).HasColumnName("PriceID");
+                entity.Property(e => e.Firstname)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsLocked).HasColumnName("isLocked");
+
+                entity.Property(e => e.Lastname)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Password)
+                    .IsRequired()
+                    .HasColumnType("ntext");
+
+                entity.Property(e => e.Updated).HasColumnType("datetime");
+
+                entity.Property(e => e.Username)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+            });
+
+            modelBuilder.Entity<Price>(entity =>
+            {
+                entity.Property(e => e.PricePerKm)
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .IsFixedLength(true);
+            });
+
+            modelBuilder.Entity<Saldo>(entity =>
+            {
+                entity.ToTable("Saldo");
 
                 entity.Property(e => e.Created).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Pengguna)
+                    .WithMany(p => p.Saldos)
+                    .HasForeignKey(d => d.PenggunaId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Saldo_Penggunas");
             });
 
             modelBuilder.Entity<SaldoDriver>(entity =>
@@ -82,11 +114,7 @@ namespace DriverService.Models
 
                 entity.ToTable("SaldoDriver");
 
-                entity.Property(e => e.SaldoId).HasColumnName("SaldoID");
-
                 entity.Property(e => e.Created).HasColumnType("datetime");
-
-                entity.Property(e => e.DriverId).HasColumnName("DriverID");
 
                 entity.HasOne(d => d.Driver)
                     .WithMany(p => p.SaldoDrivers)
@@ -95,13 +123,41 @@ namespace DriverService.Models
                     .HasConstraintName("FK_SaldoDriver_UserDriver");
             });
 
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("User");
+
+                entity.Property(e => e.Created).HasColumnType("datetime");
+
+                entity.Property(e => e.Email)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.FullName)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IsLocked).HasColumnName("isLocked");
+
+                entity.Property(e => e.Password)
+                    .IsRequired()
+                    .HasColumnType("ntext");
+
+                entity.Property(e => e.Updated).HasColumnType("datetime");
+
+                entity.Property(e => e.Username)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+            });
+
             modelBuilder.Entity<UserDriver>(entity =>
             {
                 entity.HasKey(e => e.DriverId);
 
                 entity.ToTable("UserDriver");
-
-                entity.Property(e => e.DriverId).HasColumnName("DriverID");
 
                 entity.Property(e => e.Created).HasColumnType("datetime");
 
@@ -125,39 +181,6 @@ namespace DriverService.Models
                     .HasColumnType("ntext");
 
                 entity.Property(e => e.Updated).HasColumnType("datetime");
-
-                entity.Property(e => e.Username)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
-            });
-
-            modelBuilder.Entity<UserPengguna>(entity =>
-            {
-                entity.HasKey(e => e.PenggunaId);
-
-                entity.ToTable("UserPengguna");
-
-                entity.Property(e => e.PenggunaId).HasColumnName("PenggunaID");
-
-                entity.Property(e => e.Email)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.Firstname)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.Lastname)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.Password)
-                    .IsRequired()
-                    .HasColumnType("ntext");
 
                 entity.Property(e => e.Username)
                     .IsRequired()
