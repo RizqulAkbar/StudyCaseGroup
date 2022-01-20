@@ -10,7 +10,7 @@ using PenggunaService.Data;
 namespace PenggunaService.Migrations
 {
     [DbContext(typeof(PenggunaDbContext))]
-    [Migration("20220118131954_CreateDb")]
+    [Migration("20220120053614_CreateDb")]
     partial class CreateDb
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -122,21 +122,6 @@ namespace PenggunaService.Migrations
                     b.ToTable("Prices");
                 });
 
-            modelBuilder.Entity("PenggunaService.Models.Role", b =>
-                {
-                    b.Property<int>("RoleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("RoleId");
-
-                    b.ToTable("Roles");
-                });
-
             modelBuilder.Entity("PenggunaService.Models.Saldo", b =>
                 {
                     b.Property<int>("SaldoId")
@@ -163,28 +148,6 @@ namespace PenggunaService.Migrations
                     b.ToTable("Saldos");
                 });
 
-            modelBuilder.Entity("PenggunaService.Models.UserRole", b =>
-                {
-                    b.Property<int>("UserRoleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int>("PenggunaId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
-
-                    b.HasKey("UserRoleId");
-
-                    b.HasIndex("PenggunaId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("UserRoles");
-                });
-
             modelBuilder.Entity("PenggunaService.Models.Order", b =>
                 {
                     b.HasOne("PenggunaService.Models.Pengguna", "Pengguna")
@@ -207,37 +170,11 @@ namespace PenggunaService.Migrations
                     b.Navigation("Pengguna");
                 });
 
-            modelBuilder.Entity("PenggunaService.Models.UserRole", b =>
-                {
-                    b.HasOne("PenggunaService.Models.Pengguna", "Pengguna")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("PenggunaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PenggunaService.Models.Role", "Role")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Pengguna");
-
-                    b.Navigation("Role");
-                });
-
             modelBuilder.Entity("PenggunaService.Models.Pengguna", b =>
                 {
                     b.Navigation("Orders");
 
                     b.Navigation("Saldo");
-
-                    b.Navigation("UserRoles");
-                });
-
-            modelBuilder.Entity("PenggunaService.Models.Role", b =>
-                {
-                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }
