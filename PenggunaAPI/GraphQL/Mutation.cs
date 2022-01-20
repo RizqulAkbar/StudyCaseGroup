@@ -72,40 +72,48 @@ namespace PenggunaAPI.GraphQL
             [Service] PenggunaDbContext db
         )
         {
-            var pengguna = db.Penggunas.Where(o => o.Username == input.Username && o.isLocked == false).FirstOrDefault();
-            if (pengguna == null)
+            var pengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
+            if (pengguna != null)
+            {
+                if (pengguna.isLocked == true)
+                {
+                    return await Task.FromResult(new TokenPengguna(null, null, "Your account is suspended, please contact your admin"));
+                }
+                else
+                {
+                    bool valid = BCrypt.Net.BCrypt.Verify(input.Password, pengguna.Password);
+                    if (valid)
+                    {
+                        var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSettings.Value.Key));
+                        var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
+
+                        var claims = new List<Claim>();
+                        claims.Add(new Claim(ClaimTypes.Name, pengguna.Username));
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, pengguna.PenggunaId.ToString()));
+
+                        var expired = DateTime.Now.AddHours(1);
+                        var jwtToken = new JwtSecurityToken(
+                            issuer: tokenSettings.Value.Issuer,
+                            audience: tokenSettings.Value.Audience,
+                            claims: claims,
+                            expires: expired,
+                            signingCredentials: credentials
+                        );
+
+                        return await Task.FromResult(
+                            new TokenPengguna(new JwtSecurityTokenHandler().WriteToken(jwtToken),
+                            expired.ToString(), "Login Success"));
+                    }
+                    else
+                    {
+                        return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
+                    }
+                }
+            }
+            else
             {
                 return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
             }
-            var lockedPengguna = db.Penggunas.Where(o => o.Username == input.Username && o.isLocked == true).FirstOrDefault();
-            if (lockedPengguna != null)
-            {
-                return await Task.FromResult(new TokenPengguna(null, null, "Your account is suspended, please contact your admin"));
-            }
-            bool valid = BCrypt.Net.BCrypt.Verify(input.Password, pengguna.Password);
-            if (valid)
-            {
-                var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSettings.Value.Key));
-                var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
-
-                var claims = new List<Claim>();
-                claims.Add(new Claim(ClaimTypes.Name, pengguna.Username));
-                claims.Add(new Claim(ClaimTypes.NameIdentifier, pengguna.PenggunaId.ToString()));
-
-                var expired = DateTime.Now.AddHours(1);
-                var jwtToken = new JwtSecurityToken(
-                    issuer: tokenSettings.Value.Issuer,
-                    audience: tokenSettings.Value.Audience,
-                    claims: claims,
-                    expires: expired,
-                    signingCredentials: credentials
-                );
-
-                return await Task.FromResult(
-                    new TokenPengguna(new JwtSecurityTokenHandler().WriteToken(jwtToken),
-                    expired.ToString(), "Login Success"));
-            }
-            return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
         }
 
         [Authorize]
@@ -220,7 +228,8 @@ namespace PenggunaAPI.GraphQL
                 }
                 return new Status(true, "Order was cancelled, your balance has refunded");
             }
-            else{
+            else
+            {
                 return new Status(false, "Order was cancelled, failed to refund your balance");
             }
         }
