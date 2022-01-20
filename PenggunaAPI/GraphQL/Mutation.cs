@@ -63,25 +63,6 @@ namespace PenggunaAPI.GraphQL
             db.Saldos.Add(newSaldo);
             await db.SaveChangesAsync();
 
-            var role = db.Roles.Where(o => o.Name == "Pengguna").FirstOrDefault();
-            if (role == null)
-            {
-                var newRole = new Role
-                {
-                    Name = "Pengguna"
-                };
-                db.Roles.Add(newRole);
-                await db.SaveChangesAsync();
-            }
-
-            var currentRole = db.Roles.Where(o => o.Name == "Pengguna").FirstOrDefault();
-            var newUserRole = new UserRole
-            {
-                PenggunaId = currentPengguna.PenggunaId,
-                RoleId = currentRole.RoleId
-            };
-            db.UserRoles.Add(newUserRole);
-            await db.SaveChangesAsync();
             return new Status(true, "New Pengguna Registration Successful");
         }
 
@@ -91,10 +72,15 @@ namespace PenggunaAPI.GraphQL
             [Service] PenggunaDbContext db
         )
         {
-            var pengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
+            var pengguna = db.Penggunas.Where(o => o.Username == input.Username && o.isLocked == false).FirstOrDefault();
             if (pengguna == null)
             {
                 return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
+            }
+            var lockedPengguna = db.Penggunas.Where(o => o.Username == input.Username && o.isLocked == true).FirstOrDefault();
+            if (lockedPengguna != null)
+            {
+                return await Task.FromResult(new TokenPengguna(null, null, "Your account is suspended, please contact your admin"));
             }
             bool valid = BCrypt.Net.BCrypt.Verify(input.Password, pengguna.Password);
             if (valid)
@@ -105,16 +91,6 @@ namespace PenggunaAPI.GraphQL
                 var claims = new List<Claim>();
                 claims.Add(new Claim(ClaimTypes.Name, pengguna.Username));
                 claims.Add(new Claim(ClaimTypes.NameIdentifier, pengguna.PenggunaId.ToString()));
-                var userRoles = db.UserRoles.Where(o => o.PenggunaId == pengguna.PenggunaId).ToList();
-
-                foreach (var userRole in userRoles)
-                {
-                    var role = db.Roles.Where(o => o.RoleId == userRole.RoleId).FirstOrDefault();
-                    if (role != null)
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, role.Name));
-                    }
-                }
 
                 var expired = DateTime.Now.AddHours(1);
                 var jwtToken = new JwtSecurityToken(

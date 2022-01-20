@@ -21,6 +21,5 @@ namespace PenggunaAPI.Models
         public bool isLocked { get; set; }
         public ICollection<Order> Orders { get; set; }
         public ICollection<Saldo> Saldo { get; set; }
-        public ICollection<UserRole> UserRoles { get; set; }
     }
 }
