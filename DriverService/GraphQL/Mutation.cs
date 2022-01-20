@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -101,8 +102,7 @@ namespace DriverService.GraphQL
         public async Task<Status> AcceptOrderAsync(
             [Service] StudyCaseGroupContext context,
             [Service] IHttpContextAccessor httpContextAccessor,
-            [Service] IOptions<KafkaSettings> kafkaSettings
-        )
+            [Service] IOptions<KafkaSettings> kafkaSettings)
         {
             var accept = await KafkaHelper.AcceptOrder(kafkaSettings.Value, context);
             if (accept > 0)
@@ -169,14 +169,15 @@ namespace DriverService.GraphQL
         //User
 
         //Register
-        public async Task<UserData> RegisterAsync(
+        public async Task<Status> RegisterAsync(
             RegisterUser input,
-            [Service] StudyCaseGroupContext context)
+            [Service] StudyCaseGroupContext context,
+            [Service] IOptions<KafkaSettings> kafkaSettings)
         {
             var user = context.UserDrivers.Where(o => o.Username == input.Username).FirstOrDefault();
             if (user != null)
             {
-                return await Task.FromResult(new UserData());
+                return await Task.FromResult(new Status(true, "Username sudah ada"));
             }
             var newUser = new UserDriver
             {
@@ -188,12 +189,12 @@ namespace DriverService.GraphQL
                 LatDriver = 0,
                 LongDriver = 0,
                 Lock = false,
-                Approved = true,
+                Approved = false,
                 Created = DateTime.Now,
                 Updated = DateTime.Now
             };
 
-            var ret = context.UserDrivers.Add(newUser);
+            context.UserDrivers.Add(newUser);
             await context.SaveChangesAsync();
 
             var newSaldo = new SaldoDriver
@@ -207,16 +208,28 @@ namespace DriverService.GraphQL
                 context.SaldoDrivers.Add(newSaldo);
                 await context.SaveChangesAsync();
 
-            return await Task.FromResult(new UserData
-            {
-                Id = newUser.DriverId,
-                Username = newUser.Username,
-                Email = newUser.Email,
-                Firstname = newUser.Firstname,
-                Lastname = newUser.Lastname,
-                LatDriver = (float)newUser.LatDriver,
-                LongDriver = (float)newUser.LongDriver
-            });
+            //return await Task.FromResult(new UserData
+            //{
+            //    Id = newUser.DriverId,
+            //    Username = newUser.Username,
+            //    Email = newUser.Email,
+            //    Firstname = newUser.Firstname,
+            //    Lastname = newUser.Lastname,
+            //    LatDriver = (float)newUser.LatDriver,
+            //    LongDriver = (float)newUser.LongDriver
+            //});
+
+            var key = "driver-add-" + DateTime.Now.ToString();
+            var val = JObject.FromObject(newUser).ToString(Formatting.None);
+            var result = await KafkaHelper.SendMessage(kafkaSettings.Value, "addDriver", key, val);
+            await KafkaHelper.SendMessage(kafkaSettings.Value, "addDriver", key, val);
+
+            var ret = new Status(result, "");
+            if (!result)
+                ret = new Status(result, "Failed to submit data");
+
+
+            return await Task.FromResult(ret);
         }
 
         //Login
