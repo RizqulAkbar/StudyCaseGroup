@@ -28,7 +28,7 @@ namespace PenggunaAPI.GraphQL
             });
         }
 
-        [Authorize(Roles = new[] { "Pengguna" })]
+        [Authorize]
         public IQueryable<OrderFee> GetOrderFees(
             [Service] PenggunaDbContext db,
             [Service] IHttpContextAccessor httpContextAccessor)
@@ -42,7 +42,7 @@ namespace PenggunaAPI.GraphQL
             }).Where(o => o.PenggunaId == penggunaId && o.Fee < 0).OrderByDescending(c=> c.Created).AsQueryable();
         }
 
-        [Authorize(Roles = new[] { "Pengguna" })]
+        [Authorize]
         public IEnumerable<SaldoOutput> GetSaldos(
             [Service] PenggunaDbContext db,
             [Service] IHttpContextAccessor httpContextAccessor)
@@ -58,7 +58,7 @@ namespace PenggunaAPI.GraphQL
             }).Where(o => o.PenggunaId == penggunaId).OrderByDescending(o=>o.SaldoId).ToList();
         }
 
-        [Authorize(Roles = new[] { "Pengguna" })]
+        [Authorize]
         public IEnumerable<OrderHistory> GetOrderHistory(
            [Service] PenggunaDbContext db,
            [Service] IHttpContextAccessor httpContextAccessor)
