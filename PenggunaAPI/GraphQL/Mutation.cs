@@ -115,7 +115,7 @@ namespace PenggunaAPI.GraphQL
                     }
                 }
 
-                var expired = DateTime.Now.AddMinutes(30);
+                var expired = DateTime.Now.AddHours(1);
                 var jwtToken = new JwtSecurityToken(
                     issuer: tokenSettings.Value.Issuer,
                     audience: tokenSettings.Value.Audience,
@@ -225,75 +225,33 @@ namespace PenggunaAPI.GraphQL
         [Authorize(Roles = new[] { "Pengguna" })]
         public async Task<Status> CancelOrderAsync(
             [Service] PenggunaDbContext db,
-            [Service] IHttpContextAccessor httpContextAccessor
+            [Service] IHttpContextAccessor httpContextAccessor,
+            [Service] IOptions<KafkaSettings> kafkaSettings
         )
         {
-            var builder = new ConfigurationBuilder()
-                    .AddJsonFile($"appsettings.json", true, true);
-
-            var config = builder.Build();
-
-
-            var Serverconfig = new ConsumerConfig
+            var cancel = await KafkaHelper.CancelOrder(kafkaSettings.Value, db);
+            if (cancel > 0)
             {
-                BootstrapServers = config["KafkaSettings:Server"],
-                GroupId = "Order",
-                AutoOffsetReset = AutoOffsetReset.Earliest
-            };
-            CancellationTokenSource cts = new CancellationTokenSource();
-            Console.CancelKeyPress += (_, e) =>
-            {
-                e.Cancel = true; // prevent the process from terminating.
-                cts.Cancel();
-            };
-            Console.WriteLine("=================Cancelling Your Order=================");
-            using (var consumer = new ConsumerBuilder<string, string>(Serverconfig).Build())
-            {
-                var topics = new string[] { "Order" };
-                consumer.Subscribe(topics);
-                try
+                var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
+                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+                if (oldSaldo != null)
                 {
-                    var cr = consumer.Consume(cts.Token);
-                    Console.WriteLine($"Consumed record with Topic: {cr.Topic} key: {cr.Message.Key} and value: {cr.Message.Value}");
-
-                    if (cr.Topic == "Order")
+                    var newSaldo = new Saldo()
                     {
-                        Order order = JsonConvert.DeserializeObject<Order>(cr.Message.Value);
-                        order.Status = "Cancelled";
-                        db.Orders.Add(order);
-                    }
-                    var cancel = await db.SaveChangesAsync();
-                    Console.WriteLine("--> Data was saved into database");
-                    Console.WriteLine("--> Your order was cancelled");
-                    if (cancel > 0)
-                    {
-                        var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-                        var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-                        var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
-                        if (oldSaldo != null)
-                        {
-                            var newSaldo = new Saldo()
-                            {
-                                PenggunaId = currentPengguna.PenggunaId,
-                                TotalSaldo = oldSaldo.TotalSaldo - (float)oldSaldo.MutasiSaldo,
-                                MutasiSaldo = -oldSaldo.MutasiSaldo,
-                                Created = DateTime.Now
-                            };
-                            db.Saldos.Add(newSaldo);
-                            await db.SaveChangesAsync();
-                        }
-                    }
+                        PenggunaId = currentPengguna.PenggunaId,
+                        TotalSaldo = oldSaldo.TotalSaldo - (float)oldSaldo.MutasiSaldo,
+                        MutasiSaldo = -oldSaldo.MutasiSaldo,
+                        Created = DateTime.Now
+                    };
+                    db.Saldos.Add(newSaldo);
+                    await db.SaveChangesAsync();
                 }
-                catch (OperationCanceledException)
-                {
-                    // Ctrl-C was pressed.
-                }
-                finally
-                {
-                    consumer.Close();
-                }
+                return new Status(true, "Order was cancelled, your balance has refunded");
             }
-            return new Status(true, "Order was cancelled");
+            else{
+                return new Status(false, "Order was cancelled, failed to refund your balance");
+            }
         }
     }
 }
