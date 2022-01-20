@@ -77,7 +77,8 @@ namespace PenggunaService.GraphQL
             {
                 if (pengguna.isLocked == true)
                 {
-                    return await Task.FromResult(new TokenPengguna(null, null, "Your account is suspended, please contact your admin"));
+                    return await Task.FromResult(new TokenPengguna(
+                        null, null, "Your account is suspended, please contact your admin"));
                 }
                 else
                 {
@@ -106,13 +107,15 @@ namespace PenggunaService.GraphQL
                     }
                     else
                     {
-                        return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
+                        return await Task.FromResult(new TokenPengguna(
+                            null, null, "Username or password was invalid"));
                     }
                 }
             }
             else
             {
-                return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
+                return await Task.FromResult(new TokenPengguna(
+                    null, null, "Username or password was invalid"));
             }
         }
 
