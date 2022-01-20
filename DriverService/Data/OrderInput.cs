@@ -2,7 +2,6 @@
 {
     public record OrderInput
      (
-         int DriverID,
          int PenggunaID
      );
 }

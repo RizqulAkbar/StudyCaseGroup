@@ -19,6 +19,7 @@ using PenggunaAPI.Auth;
 using PenggunaAPI.Data;
 using PenggunaAPI.InputMutation;
 using PenggunaAPI.Kafka;
+using PenggunaAPI.Location;
 using PenggunaAPI.Models;
 using PenggunaAPI.OutputMutation;
 
@@ -62,25 +63,6 @@ namespace PenggunaAPI.GraphQL
             db.Saldos.Add(newSaldo);
             await db.SaveChangesAsync();
 
-            var role = db.Roles.Where(o => o.Name == "Pengguna").FirstOrDefault();
-            if (role == null)
-            {
-                var newRole = new Role
-                {
-                    Name = "Pengguna"
-                };
-                db.Roles.Add(newRole);
-                await db.SaveChangesAsync();
-            }
-
-            var currentRole = db.Roles.Where(o => o.Name == "Pengguna").FirstOrDefault();
-            var newUserRole = new UserRole
-            {
-                PenggunaId = currentPengguna.PenggunaId,
-                RoleId = currentRole.RoleId
-            };
-            db.UserRoles.Add(newUserRole);
-            await db.SaveChangesAsync();
             return new Status(true, "New Pengguna Registration Successful");
         }
 
@@ -90,10 +72,15 @@ namespace PenggunaAPI.GraphQL
             [Service] PenggunaDbContext db
         )
         {
-            var pengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
+            var pengguna = db.Penggunas.Where(o => o.Username == input.Username && o.isLocked == false).FirstOrDefault();
             if (pengguna == null)
             {
                 return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
+            }
+            var lockedPengguna = db.Penggunas.Where(o => o.Username == input.Username && o.isLocked == true).FirstOrDefault();
+            if (lockedPengguna != null)
+            {
+                return await Task.FromResult(new TokenPengguna(null, null, "Your account is suspended, please contact your admin"));
             }
             bool valid = BCrypt.Net.BCrypt.Verify(input.Password, pengguna.Password);
             if (valid)
@@ -104,18 +91,8 @@ namespace PenggunaAPI.GraphQL
                 var claims = new List<Claim>();
                 claims.Add(new Claim(ClaimTypes.Name, pengguna.Username));
                 claims.Add(new Claim(ClaimTypes.NameIdentifier, pengguna.PenggunaId.ToString()));
-                var userRoles = db.UserRoles.Where(o => o.PenggunaId == pengguna.PenggunaId).ToList();
 
-                foreach (var userRole in userRoles)
-                {
-                    var role = db.Roles.Where(o => o.RoleId == userRole.RoleId).FirstOrDefault();
-                    if (role != null)
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, role.Name));
-                    }
-                }
-
-                var expired = DateTime.Now.AddMinutes(30);
+                var expired = DateTime.Now.AddHours(1);
                 var jwtToken = new JwtSecurityToken(
                     issuer: tokenSettings.Value.Issuer,
                     audience: tokenSettings.Value.Audience,
@@ -131,7 +108,7 @@ namespace PenggunaAPI.GraphQL
             return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
         }
 
-        [Authorize(Roles = new[] { "Pengguna" })]
+        [Authorize]
         public async Task<Status> OrderAsync(
             OrderInput input,
             [Service] PenggunaDbContext db,
@@ -141,17 +118,11 @@ namespace PenggunaAPI.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var currentSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o=>o.SaldoId).LastOrDefault();
+            var currentSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
             var pricePerKm = db.Prices.FirstOrDefault();
 
-            var d1 = currentPengguna.Latitude * (Math.PI / 180.0);
-            var num1 = currentPengguna.Longitude * (Math.PI / 180.0);
-            var d2 = input.LatTujuan * (Math.PI / 180.0);
-            var num2 = input.LongTujuan * (Math.PI / 180.0) - num1;
-            var d3 = Math.Pow(Math.Sin((d2 - d1) / 2.0), 2.0) +
-                     Math.Cos(d1) * Math.Cos(d2) * Math.Pow(Math.Sin(num2 / 2.0), 2.0);
-            var distance = 6378.137 * (2.0 * Math.Atan2(Math.Sqrt(d3), Math.Sqrt(1.0 - d3)));
-            float price = (float)distance * 1;
+            var distance = await LocationHelper.GetDistance(currentPengguna.Latitude, currentPengguna.Longitude, input.LatTujuan, input.LongTujuan);
+            var price = distance * 1;
 
             if (currentSaldo.TotalSaldo >= price)
             {
@@ -175,7 +146,7 @@ namespace PenggunaAPI.GraphQL
                 var val = JObject.FromObject(newOrder).ToString(Formatting.None);
                 await KafkaHelper.SendMessage(kafkaSettings.Value, "Order", key, val);
 
-                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o=>o.SaldoId).LastOrDefault();
+                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
                 var newSaldo = new Saldo()
                 {
                     PenggunaId = currentPengguna.PenggunaId,
@@ -193,7 +164,7 @@ namespace PenggunaAPI.GraphQL
             }
         }
 
-        [Authorize(Roles = new[] { "Pengguna" })]
+        [Authorize]
         public async Task<Status> TopUpAsync(
             float topUp,
             [Service] PenggunaDbContext db,
@@ -202,7 +173,7 @@ namespace PenggunaAPI.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o=>o.SaldoId).LastOrDefault();
+            var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
             if (oldSaldo != null)
             {
                 var newSaldo = new Saldo()
@@ -222,60 +193,36 @@ namespace PenggunaAPI.GraphQL
             }
         }
 
-        [Authorize(Roles = new[] { "Pengguna" })]
+        [Authorize]
         public async Task<Status> CancelOrderAsync(
             [Service] PenggunaDbContext db,
-            [Service] IHttpContextAccessor httpContextAccessor
+            [Service] IHttpContextAccessor httpContextAccessor,
+            [Service] IOptions<KafkaSettings> kafkaSettings
         )
         {
-            var builder = new ConfigurationBuilder()
-                    .AddJsonFile($"appsettings.json", true, true);
-
-            var config = builder.Build();
-
-
-            var Serverconfig = new ConsumerConfig
+            var cancel = await KafkaHelper.CancelOrder(kafkaSettings.Value, db);
+            if (cancel > 0)
             {
-                BootstrapServers = config["KafkaSettings:Server"],
-                GroupId = "Order",
-                AutoOffsetReset = AutoOffsetReset.Earliest
-            };
-            CancellationTokenSource cts = new CancellationTokenSource();
-            Console.CancelKeyPress += (_, e) =>
-            {
-                e.Cancel = true; // prevent the process from terminating.
-                cts.Cancel();
-            };
-            Console.WriteLine("=================Cancelling Your Order=================");
-            using (var consumer = new ConsumerBuilder<string, string>(Serverconfig).Build())
-            {
-                var topics = new string[] { "Order" };
-                consumer.Subscribe(topics);
-                try
+                var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
+                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+                if (oldSaldo != null)
                 {
-                    var cr = consumer.Consume(cts.Token);
-                    Console.WriteLine($"Consumed record with Topic: {cr.Topic} key: {cr.Message.Key} and value: {cr.Message.Value}");
-
-                    if (cr.Topic == "Order")
+                    var newSaldo = new Saldo()
                     {
-                        Order order = JsonConvert.DeserializeObject<Order>(cr.Message.Value);
-                        order.Status = "Cancelled";
-                        db.Orders.Add(order);
-                    }
+                        PenggunaId = currentPengguna.PenggunaId,
+                        TotalSaldo = oldSaldo.TotalSaldo - (float)oldSaldo.MutasiSaldo,
+                        MutasiSaldo = -oldSaldo.MutasiSaldo,
+                        Created = DateTime.Now
+                    };
+                    db.Saldos.Add(newSaldo);
                     await db.SaveChangesAsync();
-                    Console.WriteLine("--> Data was saved into database");
-                    Console.WriteLine("--> Your order was cancelled");
                 }
-                catch (OperationCanceledException)
-                {
-                    // Ctrl-C was pressed.
-                }
-                finally
-                {
-                    consumer.Close();
-                }
+                return new Status(true, "Order was cancelled, your balance has refunded");
             }
-            return new Status(true, "Order was cancelled");
+            else{
+                return new Status(false, "Order was cancelled, failed to refund your balance");
+            }
         }
     }
 }

@@ -12,8 +12,8 @@ namespace DriverService.Models
         public int PenggunaId { get; set; }
         public float LatPengguna { get; set; }
         public float LongPengguna { get; set; }
-        public float LatDriver { get; set; }
-        public float LongDriver { get; set; }
+        public float? LatDriver { get; set; }
+        public float? LongDriver { get; set; }
         public float LatTujuan { get; set; }
         public float LongTujuan { get; set; }
         public float Price { get; set; }
