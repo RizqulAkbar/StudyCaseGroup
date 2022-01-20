@@ -1,11 +1,14 @@
 ﻿using Admin.Models;
 using HotChocolate;
+using HotChocolate.AspNetCore.Authorization;
 using System.Linq;
 
 namespace Admin.GraphQL
 {
+    [Authorize]
     public class Querry
     {
+        /*
         public IQueryable<UserData> GetUsers([Service] OjegDbContext context) =>
             context.Users.Select(p => new UserData()
             {
@@ -15,7 +18,7 @@ namespace Admin.GraphQL
                 Username = p.Username,
                 isLocked = p.IsLocked
             });
-
+        */
         public IQueryable<Order> GetTransactions([Service] OjegDbContext context) =>
             context.Orders;
 

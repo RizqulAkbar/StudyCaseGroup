@@ -1,6 +1,7 @@
 ﻿using Admin.Dtos;
 using Admin.Models;
 using HotChocolate;
+using HotChocolate.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace Admin.GraphQL
 {
+    
     public class Mutation
     {
         public async Task<TransactionStatus> RegisterUserAsync(
@@ -117,6 +119,7 @@ namespace Admin.GraphQL
             return await Task.FromResult(new UserToken(null, null, Message: "Username or password was invalid"));
         }
 
+        [Authorize]
         public async Task<TransactionStatus> LockUserAsync(
             int id,
             LockUser input,
@@ -137,6 +140,7 @@ namespace Admin.GraphQL
             return await Task.FromResult(new TransactionStatus(true, $"Lock/Unlock with Penggunaid {id} successful updated"));
         }
 
+        [Authorize]
         public async Task<TransactionStatus> LockDriverAsync(
             int id,
             LockDriverDto input,
@@ -157,6 +161,7 @@ namespace Admin.GraphQL
             return await Task.FromResult(new TransactionStatus(true, $"Lock/Unlock with driverid {id} successful updated"));
         }
 
+        [Authorize]
         public async Task<TransactionStatus> ApproveDriverAsync(
             int id,
             ApproveDriverDto input,
@@ -177,6 +182,7 @@ namespace Admin.GraphQL
             return await Task.FromResult(new TransactionStatus(true, $"Approve with driverid {id} successful updated"));
         }
 
+        [Authorize]
         public async Task<TransactionStatus> UpdatePriceAsync(
             int id,
             PriceDto input,
@@ -196,6 +202,7 @@ namespace Admin.GraphQL
             return await Task.FromResult(new TransactionStatus(true, $"Price with id {id} successful updated"));
         }
 
+        [Authorize]
         public async Task<TransactionStatus> UpdatePasswordPenggunaAsync(
             int id,
             UpdatePenggunaDto input,
@@ -216,6 +223,7 @@ namespace Admin.GraphQL
             return await Task.FromResult(new TransactionStatus(true, $"Password with penggunaid {id} successful updated"));
         }
 
+        [Authorize]
         public async Task<TransactionStatus> UpdatePasswordDriverAsync(
             int id,
             UpdateDriverDto input,
