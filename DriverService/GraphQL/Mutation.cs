@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using DriverService.Data;
+using DriverService.Kafka;
 using DriverService.Models;
 using GeoCoordinatePortable;
 using HotChocolate;
@@ -23,79 +24,6 @@ namespace DriverService.GraphQL
     public class Mutation
     {
         //Saldo
-
-        //Tambah Saldo
-        [Authorize]
-        public async Task<SaldoDriver> PutSaldoAsync(
-                [Service] StudyCaseGroupContext context,
-                [Service] IHttpContextAccessor httpContextAccessor)
-        {
-            //if (priceadmin == null)
-            //{
-            //    var price1 = new PriceAdmin
-            //    {
-            //        Price = 15000,
-            //        Created = DateTime.Now
-            //    };
-
-            //    context.PriceAdmins.Add(price1);
-            //    await context.SaveChangesAsync();
-            //}
-
-            var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            var driver = context.SaldoDrivers.Where(o => o.DriverId == driverId).OrderByDescending(x => x.Created).FirstOrDefault();
-
-            if (driver == null)
-            {
-                Console.WriteLine("Driver tidak ditemukan");
-                return null;
-            }
-
-            //var price = context.PriceAdmins.OrderByDescending(x => x.Created).FirstOrDefault();
-
-            //if (price == null)
-            //{
-            //    Console.WriteLine("Price tidak ditemukan");
-            //    return null;
-            //}
-
-            var order = context.Orders.Where(o => o.DriverId == driverId).OrderByDescending(x => x.Created).FirstOrDefault();
-
-            if (order == null)
-            {
-                Console.WriteLine("Order tidak ditemukan");
-                return null;
-            }
-            Console.WriteLine(order);
-
-            //Get Distance
-            //var sCoord = new GeoCoordinate(order.LatPengguna, order.LongPengguna);
-            //var eCoord = new GeoCoordinate(order.LatTujuan, order.LongTujuan);
-
-            //var s = sCoord.GetDistanceTo(eCoord);
-
-            if (driver == null)
-            {
-                Console.WriteLine("Driver tidak ditemukan");
-                return null;
-            }
-            else
-            {
-                var newSaldo = new SaldoDriver
-                {
-                    DriverId = driver.DriverId,
-                    MutasiSaldo = order.Price,
-                    TotalSaldo = driver.TotalSaldo + order.Price,
-                    Created = DateTime.Now
-                };
-
-                context.SaldoDrivers.Add(newSaldo);
-                await context.SaveChangesAsync();
-
-                return await Task.FromResult(newSaldo);
-            }
-
-        }
 
         //Tarik saldo
         [Authorize]
@@ -171,58 +99,24 @@ namespace DriverService.GraphQL
 
         [Authorize]
         public async Task<Status> AcceptOrderAsync(
-            [Service] StudyCaseGroupContext db,
-            [Service] IHttpContextAccessor httpContextAccessor
+            [Service] StudyCaseGroupContext context,
+            [Service] IHttpContextAccessor httpContextAccessor,
+            [Service] IOptions<KafkaSettings> kafkaSettings
         )
         {
-            var builder = new ConfigurationBuilder()
-                    .AddJsonFile($"appsettings.json", true, true);
-
-            var config = builder.Build();
-
-
-            var Serverconfig = new ConsumerConfig
+            var accept = await KafkaHelper.AcceptOrder(kafkaSettings.Value, context);
+            if (accept > 0)
             {
-                BootstrapServers = config["KafkaSettings:Server"],
-                GroupId = "Order",
-                AutoOffsetReset = AutoOffsetReset.Earliest
-            };
-            CancellationTokenSource cts = new CancellationTokenSource();
-            Console.CancelKeyPress += (_, e) =>
-            {
-                e.Cancel = true; // prevent the process from terminating.
-                cts.Cancel();
-            };
-            Console.WriteLine("=================Accepting Order=================");
-            using (var consumer = new ConsumerBuilder<string, string>(Serverconfig).Build())
-            {
-                var topics = new string[] { "Order" };
-                consumer.Subscribe(topics);
-                try
-                {
-                    var cr = consumer.Consume(cts.Token);
-                    Console.WriteLine($"Consumed record with Topic: {cr.Topic} key: {cr.Message.Key} and value: {cr.Message.Value}");
-
-                    if (cr.Topic == "Order")
-                    {
-                        Order order = JsonConvert.DeserializeObject<Order>(cr.Message.Value);
-                        order.Status = "Accepted";
-                        db.Orders.Add(order);
-                    }
-                    var accept = await db.SaveChangesAsync();
-                    Console.WriteLine("--> Data was saved into database");
-                }
-                catch (OperationCanceledException)
-                {
-                    // Ctrl-C was pressed.
-                }
-                finally
-                {
-                    consumer.Close();
-                }
+                var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                var currentPengguna = context.UserDrivers.Where(o => o.DriverId == driverId).FirstOrDefault();
+                return new Status(true, "Order was cancelled, your balance has refunded");
             }
-            return new Status(true, "Order is Accepted");
+            else
+            {
+                return new Status(false, "Order was cancelled, failed to refund your balance");
+            }
         }
+    
 
         [Authorize]
         public async Task<OrderOutput> FinishOrderAsync(
@@ -230,18 +124,45 @@ namespace DriverService.GraphQL
             [Service] StudyCaseGroupContext context,
              [Service] IHttpContextAccessor httpContextAccessor)
         {
+            //Change status order
             var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var order = context.Orders.Where(o => o.DriverId == driverId && o.PenggunaId == input.PenggunaID 
             && o.Status == "Accepted").FirstOrDefault();
-            if (order != null)
+            if (order == null)
             {
-                order.Status = "Finished";
-
-                context.Orders.Update(order);
-                await context.SaveChangesAsync();
+                Console.WriteLine("Order Tidak ada");
+                return null;
             }
 
-                return new OrderOutput(order);
+            order.Status = "Finished";
+
+            context.Orders.Update(order);
+            await context.SaveChangesAsync();
+
+            //Input Saldo
+            var driver = context.SaldoDrivers.Where(o => o.DriverId == driverId).OrderByDescending(x => x.Created).FirstOrDefault();
+
+            if (driver == null)
+            {
+                Console.WriteLine("Driver tidak ditemukan\nSaldo gagal ditambahkan");
+                return null;
+            }
+            else
+            {
+                var newSaldo = new SaldoDriver
+                {
+                    DriverId = driver.DriverId,
+                    MutasiSaldo = order.Price,
+                    TotalSaldo = driver.TotalSaldo + order.Price,
+                    Created = DateTime.Now
+                };
+
+                context.SaldoDrivers.Add(newSaldo);
+                await context.SaveChangesAsync();
+
+            }
+
+            return new OrderOutput(order);
         }
 
 
