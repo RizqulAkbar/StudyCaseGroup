@@ -108,7 +108,7 @@ namespace PenggunaAPI.GraphQL
             return await Task.FromResult(new TokenPengguna(null, null, "Username or password was invalid"));
         }
 
-        [Authorize(Roles = new[] { "Pengguna" })]
+        [Authorize]
         public async Task<Status> OrderAsync(
             OrderInput input,
             [Service] PenggunaDbContext db,
@@ -164,7 +164,7 @@ namespace PenggunaAPI.GraphQL
             }
         }
 
-        [Authorize(Roles = new[] { "Pengguna" })]
+        [Authorize]
         public async Task<Status> TopUpAsync(
             float topUp,
             [Service] PenggunaDbContext db,
@@ -193,7 +193,7 @@ namespace PenggunaAPI.GraphQL
             }
         }
 
-        [Authorize(Roles = new[] { "Pengguna" })]
+        [Authorize]
         public async Task<Status> CancelOrderAsync(
             [Service] PenggunaDbContext db,
             [Service] IHttpContextAccessor httpContextAccessor,
