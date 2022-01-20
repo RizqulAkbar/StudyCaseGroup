@@ -1,14 +1,19 @@
-﻿using Confluent.Kafka;
-using Confluent.Kafka.Admin;
-using DriverService.Models;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Confluent.Kafka;
+using Confluent.Kafka.Admin;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using PenggunaService.Data;
+using PenggunaService.Models;
 
-namespace DriverService.Kafka
+namespace PenggunaService.Kafka
 {
     public class KafkaHelper
     {
@@ -67,9 +72,9 @@ namespace DriverService.Kafka
             return await Task.FromResult(succeed);
         }
 
-        public static async Task<int> AcceptOrder(KafkaSettings settings, StudyCaseGroupContext context)
+        public static async Task<int> CancelOrder(KafkaSettings settings, PenggunaDbContext db)
         {
-            var succeed = 0;
+            var orderId = 0;
             var Serverconfig = new ConsumerConfig
             {
                 BootstrapServers = settings.Server,
@@ -82,7 +87,7 @@ namespace DriverService.Kafka
                 e.Cancel = true; // prevent the process from terminating.
                 cts.Cancel();
             };
-            Console.WriteLine("=================Accepting Your Order=================");
+            Console.WriteLine("=================Cancelling Your Order=================");
             using (var consumer = new ConsumerBuilder<string, string>(Serverconfig).Build())
             {
                 var topics = new string[] { "Order" };
@@ -95,13 +100,13 @@ namespace DriverService.Kafka
                     if (cr.Topic == "Order")
                     {
                         Order order = JsonConvert.DeserializeObject<Order>(cr.Message.Value);
-                        order.Status = "Accepted";
-                        context.Orders.Add(order);
+                        order.Status = "Cancelled";
+                        db.Orders.Add(order);
+                        await db.SaveChangesAsync();
+                        orderId = order.OrderId;
                     }
-                    var cancel = await context.SaveChangesAsync();
                     Console.WriteLine("--> Data was saved into database");
-                    Console.WriteLine("--> Order Accepted");
-
+                    Console.WriteLine($"--> Your order with order id: {orderId.ToString()} was cancelled");
                 }
                 catch (OperationCanceledException)
                 {
@@ -110,10 +115,9 @@ namespace DriverService.Kafka
                 finally
                 {
                     consumer.Close();
-                    succeed = 1;
                 }
             }
-            return await Task.FromResult(succeed);
+            return await Task.FromResult(orderId);
         }
     }
 }
