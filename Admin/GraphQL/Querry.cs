@@ -8,24 +8,13 @@ namespace Admin.GraphQL
     [Authorize]
     public class Querry
     {
-        /*
-        public IQueryable<UserData> GetUsers([Service] OjegDbContext context) =>
-            context.Users.Select(p => new UserData()
-            {
-                Id = p.Id,
-                FullName = p.FullName,
-                Email = p.Email,
-                Username = p.Username,
-                isLocked = p.IsLocked
-            });
-        */
-        public IQueryable<Order> GetTransactions([Service] OjegDbContext context) =>
+        public IQueryable<Order> GetTransactions([Service] bootcampLearnDb5Context context) =>
             context.Orders;
 
-        public IQueryable<Pengguna> GetAllPengguna([Service] OjegDbContext context) =>
+        public IQueryable<Pengguna> GetAllPengguna([Service] bootcampLearnDb5Context context) =>
             context.Penggunas;
 
-        public IQueryable<UserDriver> GetAllDriver([Service] OjegDbContext context) =>
+        public IQueryable<UserDriver> GetAllDriver([Service] bootcampLearnDb5Context context) =>
             context.UserDrivers;
 
     }
