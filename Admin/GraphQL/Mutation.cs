@@ -1,6 +1,7 @@
 ﻿using Admin.Dtos;
 using Admin.Models;
 using HotChocolate;
+using HotChocolate.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -13,16 +14,17 @@ using System.Threading.Tasks;
 
 namespace Admin.GraphQL
 {
+    
     public class Mutation
     {
-        public async Task<UserData> RegisterUserAsync(
+        public async Task<TransactionStatus> RegisterUserAsync(
             RegisterDto input,
             [Service] OjegDbContext context)
         {
             var user = context.Users.Where(o => o.Username == input.UserName).FirstOrDefault();
             if (user != null)
             {
-                return await Task.FromResult(new UserData());
+                return await Task.FromResult(new TransactionStatus(false, "Username Registered, try with another username"));
             }
             var newUser = new User
             {
@@ -35,26 +37,20 @@ namespace Admin.GraphQL
                 IsLocked = false
             };
 
-            var ret = context.Users.Add(newUser);
+            var addNew = context.Users.Add(newUser);
             await context.SaveChangesAsync();
 
-            return await Task.FromResult(new UserData
-            {
-                Id = newUser.Id,
-                Username = newUser.Username,
-                Email = newUser.Email,
-                FullName = newUser.FullName
-            });
+            return await Task.FromResult(new TransactionStatus(true, "Register Was Success"));
         }
 
-        public async Task<UserData> RegisterDriverAsync(
+        public async Task<TransactionStatus> RegisterDriverAsync(
             RegisterDto input,
             [Service] OjegDbContext context)
         {
             var user = context.Users.Where(o => o.Username == input.UserName).FirstOrDefault();
             if (user != null)
             {
-                return await Task.FromResult(new UserData());
+                return await Task.FromResult(new TransactionStatus(false, "Username Registered, try with another username"));
             }
             var newUser = new User
             {
@@ -70,13 +66,7 @@ namespace Admin.GraphQL
             var ret = context.Users.Add(newUser);
             await context.SaveChangesAsync();
 
-            return await Task.FromResult(new UserData
-            {
-                Id = newUser.Id,
-                Username = newUser.Username,
-                Email = newUser.Email,
-                FullName = newUser.FullName
-            });
+            return await Task.FromResult(new TransactionStatus(true, "Register Was Success"));
         }
 
         public async Task<UserToken> LoginPenggunaAsync(
@@ -129,60 +119,79 @@ namespace Admin.GraphQL
             return await Task.FromResult(new UserToken(null, null, Message: "Username or password was invalid"));
         }
 
-        public async Task<LockUserPayload> LockUserAsync(
+        [Authorize]
+        public async Task<TransactionStatus> LockUserAsync(
             int id,
             LockUser input,
             [Service] OjegDbContext context)
         {
             var user = context.Penggunas.Where(o => o.Id == id).FirstOrDefault();
+            if (user == null)
+                return await Task.FromResult(new TransactionStatus(false, $"Pengguna with id {id} can not be found"));
+
             if (user != null)
             {
                 user.IsLocked = input.isLocked;
-
+                user.Updated = DateTime.Now;
+                
                 await context.SaveChangesAsync();
             }
 
-            return new LockUserPayload(user);
+            return await Task.FromResult(new TransactionStatus(true, $"Lock/Unlock with Penggunaid {id} successful updated"));
         }
 
-        public async Task<LockDriverPayload> LockDriverAsync(
+        [Authorize]
+        public async Task<TransactionStatus> LockDriverAsync(
             int id,
             LockDriverDto input,
             [Service] OjegDbContext context)
         {
             var driver = context.UserDrivers.Where(o => o.DriverId == id).FirstOrDefault();
+            if (driver == null)
+                return await Task.FromResult(new TransactionStatus(false, "Driver can not be found"));
+
             if (driver != null)
             {
                 driver.Lock = input.Lock;
+                driver.Updated = DateTime.Now;
 
                 await context.SaveChangesAsync();
             }
 
-            return new LockDriverPayload(driver);
+            return await Task.FromResult(new TransactionStatus(true, $"Lock/Unlock with driverid {id} successful updated"));
         }
 
-        public async Task<ApproveDriverPayload> ApproveDriverAsync(
+        [Authorize]
+        public async Task<TransactionStatus> ApproveDriverAsync(
             int id,
             ApproveDriverDto input,
             [Service] OjegDbContext context)
         {
             var driver = context.UserDrivers.Where(o => o.DriverId == id).FirstOrDefault();
+            if (driver == null)
+                return await Task.FromResult(new TransactionStatus(false, "Driver can not be found"));
+
             if (driver != null)
             {
                 driver.Approved = input.Approved;
+                driver.Updated = DateTime.Now;
 
                 await context.SaveChangesAsync();
             }
 
-            return new ApproveDriverPayload(driver);
+            return await Task.FromResult(new TransactionStatus(true, $"Approve with driverid {id} successful updated"));
         }
 
-        public async Task<PricePayload> UpdatePriceAsync(
+        [Authorize]
+        public async Task<TransactionStatus> UpdatePriceAsync(
             int id,
             PriceDto input,
             [Service] OjegDbContext context)
         {
             var price = context.Prices.Where(o => o.Id == id).FirstOrDefault();
+            if (price == null)
+                return await Task.FromResult(new TransactionStatus(false, $"Price id {id} can't be found"));
+
             if (price != null)
             {
                 price.PricePerKm = input.PricePerKm;
@@ -190,15 +199,19 @@ namespace Admin.GraphQL
                 await context.SaveChangesAsync();
             }
 
-            return new PricePayload(price);
+            return await Task.FromResult(new TransactionStatus(true, $"Price with id {id} successful updated"));
         }
 
-        public async Task<UpdatePenggunaPayload> UpdatePasswordPenggunaAsync(
+        [Authorize]
+        public async Task<TransactionStatus> UpdatePasswordPenggunaAsync(
             int id,
             UpdatePenggunaDto input,
             [Service] OjegDbContext context)
         {
             var pengguna = context.Penggunas.Where(o => o.Id == id).FirstOrDefault();
+            if (pengguna == null)
+                return await Task.FromResult(new TransactionStatus(false, $"Pengguna with id {id} can't be found"));
+
             if (pengguna != null)
             {
                 pengguna.Password = BCrypt.Net.BCrypt.HashPassword(input.Password);
@@ -207,15 +220,19 @@ namespace Admin.GraphQL
                 await context.SaveChangesAsync();
             }
 
-            return new UpdatePenggunaPayload(pengguna);
+            return await Task.FromResult(new TransactionStatus(true, $"Password with penggunaid {id} successful updated"));
         }
 
-        public async Task<UpdateDriverPayload> UpdatePasswordDriverAsync(
+        [Authorize]
+        public async Task<TransactionStatus> UpdatePasswordDriverAsync(
             int id,
             UpdateDriverDto input,
             [Service] OjegDbContext context)
         {
             var driver = context.UserDrivers.Where(o => o.DriverId == id).FirstOrDefault();
+            if (driver == null)
+                return await Task.FromResult(new TransactionStatus(false, $"Pengguna with id {id} can't be found"));
+
             if (driver != null)
             {
                 driver.Password = BCrypt.Net.BCrypt.HashPassword(input.Password);
@@ -224,7 +241,7 @@ namespace Admin.GraphQL
                 await context.SaveChangesAsync();
             }
 
-            return new UpdateDriverPayload(driver);
+            return await Task.FromResult(new TransactionStatus(true, $"Password with driverid {id} successful updated"));
         }
 
     }
