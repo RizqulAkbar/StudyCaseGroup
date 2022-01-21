@@ -7,7 +7,17 @@ metadata:
     nginx.ingress.kubernetes.io/use-regex: 'true'
 spec:
   rules:
-  - host: SCG-Banteng.com
+  - host: Admin-Banteng.com
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/graphql"
+        backend:
+          service:
+            name: admin-clusterip-srv
+            port:
+              number: 80
+  - host: Driver-Banteng.com
     http:
       paths:
       - pathType: Prefix
@@ -15,5 +25,15 @@ spec:
         backend:
           service:
             name: driverservices-clusterip-srv
+            port:
+              number: 80
+  - host: Pengguna-Banteng.com
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/graphql"
+        backend:
+          service:
+            name: penggunaservices-clusterip-srv
             port:
               number: 80
