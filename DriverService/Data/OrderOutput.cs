@@ -7,7 +7,7 @@ namespace DriverService.Data
     {
         public OrderOutput(Order order)
         {
-            DriverId = order.DriverId;
+            DriverId = (int)order.DriverId;
             PenggunaId = order.PenggunaId;
             Status = order.Status;
             Created = order.Created;

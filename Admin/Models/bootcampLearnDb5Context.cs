@@ -20,10 +20,10 @@ namespace Admin.Models
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<Pengguna> Penggunas { get; set; }
         public virtual DbSet<Price> Prices { get; set; }
-        public virtual DbSet<Role> Roles { get; set; }
+        public virtual DbSet<SaldoDriver> SaldoDrivers { get; set; }
+        public virtual DbSet<SaldoPengguna> SaldoPenggunas { get; set; }
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<UserDriver> UserDrivers { get; set; }
-        public virtual DbSet<UserRole> UserRoles { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -35,16 +35,9 @@ namespace Admin.Models
 
             modelBuilder.Entity<Order>(entity =>
             {
-                entity.Property(e => e.OrderId).HasColumnName("OrderID");
-
                 entity.Property(e => e.Created).HasColumnType("datetime");
 
-                entity.Property(e => e.DriverId).HasColumnName("DriverID");
-
-                entity.Property(e => e.PenggunaId).HasColumnName("PenggunaID");
-
                 entity.Property(e => e.Status)
-                    .IsRequired()
                     .HasMaxLength(50)
                     .IsUnicode(false);
             });
@@ -82,14 +75,35 @@ namespace Admin.Models
                     .IsUnicode(false);
             });
 
-            modelBuilder.Entity<Role>(entity =>
+            modelBuilder.Entity<SaldoDriver>(entity =>
             {
-                entity.ToTable("Role");
+                entity.HasKey(e => e.SaldoId);
 
-                entity.Property(e => e.Name)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                entity.ToTable("SaldoDriver");
+
+                entity.Property(e => e.Created).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Driver)
+                    .WithMany(p => p.SaldoDrivers)
+                    .HasForeignKey(d => d.DriverId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_SaldoDriver_UserDriver");
+            });
+
+            modelBuilder.Entity<SaldoPengguna>(entity =>
+            {
+                entity.HasKey(e => e.SaldoId)
+                    .HasName("PK_Saldo");
+
+                entity.ToTable("SaldoPengguna");
+
+                entity.Property(e => e.Created).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Pengguna)
+                    .WithMany(p => p.SaldoPenggunas)
+                    .HasForeignKey(d => d.PenggunaId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Saldo_Penggunas");
             });
 
             modelBuilder.Entity<User>(entity =>
@@ -107,6 +121,8 @@ namespace Admin.Models
                     .IsRequired()
                     .HasMaxLength(50)
                     .IsUnicode(false);
+
+                entity.Property(e => e.IsLocked).HasColumnName("isLocked");
 
                 entity.Property(e => e.Password)
                     .IsRequired()
@@ -153,11 +169,6 @@ namespace Admin.Models
                     .IsRequired()
                     .HasMaxLength(50)
                     .IsUnicode(false);
-            });
-
-            modelBuilder.Entity<UserRole>(entity =>
-            {
-                entity.ToTable("UserRole");
             });
 
             OnModelCreatingPartial(modelBuilder);

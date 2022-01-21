@@ -7,6 +7,11 @@ namespace Admin.Models
 {
     public partial class Pengguna
     {
+        public Pengguna()
+        {
+            SaldoPenggunas = new HashSet<SaldoPengguna>();
+        }
+
         public int Id { get; set; }
         public string Email { get; set; }
         public string Firstname { get; set; }
@@ -18,5 +23,7 @@ namespace Admin.Models
         public bool IsLocked { get; set; }
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
+
+        public virtual ICollection<SaldoPengguna> SaldoPenggunas { get; set; }
     }
 }

@@ -226,12 +226,12 @@ namespace Admin.GraphQL
             if (price == null)
                 return await Task.FromResult(new TransactionStatus(false, $"Price id {id} can't be found"));
 
-            if (price != null)
-            {
-                price.PricePerKm = input.PricePerKm;
+            //if (price != null)
+            //{
+            //    price.PricePerKm = input.PricePerKm;
 
-                await context.SaveChangesAsync();
-            }
+            //    await context.SaveChangesAsync();
+            //}
 
             return await Task.FromResult(new TransactionStatus(true, $"Price with id {id} successful updated"));
         }

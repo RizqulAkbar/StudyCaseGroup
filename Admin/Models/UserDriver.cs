@@ -7,6 +7,11 @@ namespace Admin.Models
 {
     public partial class UserDriver
     {
+        public UserDriver()
+        {
+            SaldoDrivers = new HashSet<SaldoDriver>();
+        }
+
         public int DriverId { get; set; }
         public string Email { get; set; }
         public string Firstname { get; set; }
@@ -19,5 +24,7 @@ namespace Admin.Models
         public bool Approved { get; set; }
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
+
+        public virtual ICollection<SaldoDriver> SaldoDrivers { get; set; }
     }
 }

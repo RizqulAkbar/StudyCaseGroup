@@ -1,5 +1,6 @@
 using DriverService.Data;
 using DriverService.GraphQL;
+using DriverService.Kafka;
 using DriverService.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -28,20 +29,20 @@ namespace DriverService
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            if (_env.IsProduction())
-            {
-                Console.WriteLine("--> Using Azure Database");
-                services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
-                    Configuration.GetConnectionString("AzureDatabase")
-                ));
-            }
-            else
-            {
+            //if (_env.IsProduction())
+            //{
+                //Console.WriteLine("--> Using Azure Database");
+                //services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
+                    //Configuration.GetConnectionString("AzureDatabase")
+                //));
+            //}
+            //else
+            //{
                 Console.WriteLine("--> Using Local Database");
                 services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
                     Configuration.GetConnectionString("LocalDatabase")
                 ));
-            }
+            //}
 
             // graphql
             services
@@ -49,6 +50,8 @@ namespace DriverService
                 .AddQueryType<Query>()
                 .AddMutationType<Mutation>()
                 .AddAuthorization();
+
+            services.Configure<KafkaSettings>(Configuration.GetSection("KafkaSettings"));
 
             services.AddHttpContextAccessor();
             services.AddControllers();
