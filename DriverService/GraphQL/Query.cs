@@ -12,7 +12,7 @@ namespace DriverService.GraphQL
     {
         [Authorize]
         public IQueryable<UserDriver> GetProfileById(
-            [Service] StudyCaseGroupContext context,
+            [Service] bootcampLearnDb5Context context,
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -21,7 +21,7 @@ namespace DriverService.GraphQL
         
         [Authorize]
         public IQueryable<SaldoDriver> GetSaldoById(
-            [Service] StudyCaseGroupContext context,
+            [Service] bootcampLearnDb5Context context,
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -30,17 +30,17 @@ namespace DriverService.GraphQL
 
         [Authorize]
         public IQueryable<Order> GetOrderById(
-            [Service] StudyCaseGroupContext context,
+            [Service] bootcampLearnDb5Context context,
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             return context.Orders.Where(p => p.DriverId == driverId);
         }
 
-        public PriceAdmin GetPriceAdmin(
-            [Service] StudyCaseGroupContext context)
+        public IQueryable<Price> GetPriceAdmin(
+            [Service] bootcampLearnDb5Context context)
         {
-            return context.PriceAdmins.OrderByDescending(x => x.Created).FirstOrDefault();
+            return context.Prices;
         }
     }
 }

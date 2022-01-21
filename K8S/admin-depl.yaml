@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adminservices-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adminservice
+  template:
+    metadata:
+      labels:
+        app: adminservice
+    spec:
+      containers:
+      - name: adminservice
+        image: rizhy/adminservice:latest
+        resources:
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: adminservices-clusterip-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: adminservice
+  ports:
+  - name: adminservice
+    protocol: TCP
+    port: 80
+    targetPort: 80
