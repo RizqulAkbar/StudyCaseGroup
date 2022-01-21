@@ -104,8 +104,7 @@ namespace DriverService.GraphQL
             [Service] IHttpContextAccessor httpContextAccessor,
             [Service] IOptions<KafkaSettings> kafkaSettings)
         {
-
-            KafkaHelper.AcceptOrder(kafkaSettings.Value, context);
+            await KafkaHelper.AcceptOrder(kafkaSettings.Value, context);
             var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
             var currentDriver = context.UserDrivers.Where(o => o.DriverId == driverId).FirstOrDefault();
@@ -130,7 +129,7 @@ namespace DriverService.GraphQL
                 {
                     PenggunaId = currentPengguna.Id,
                     TotalSaldo = (oldSaldo.TotalSaldo + order.Price),
-                    MutasiSaldo = +order.Price,
+                    MutasiSaldo = order.Price,
                     Created = DateTime.Now
                 };
                 context.SaldoPenggunas.Add(newSaldo);

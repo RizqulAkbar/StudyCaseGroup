@@ -67,7 +67,7 @@ namespace DriverService.Kafka
             return await Task.FromResult(succeed);
         }
 
-        public static async void AcceptOrder(KafkaSettings settings, bootcampLearnDb5Context context)
+        public static async Task<bool> AcceptOrder(KafkaSettings settings, bootcampLearnDb5Context context)
         {
             var Serverconfig = new ConsumerConfig
             {
@@ -106,7 +106,12 @@ namespace DriverService.Kafka
                 {
                     // Ctrl-C was pressed.
                 }
+                finally
+                {
+                    consumer.Close();
+                }
             }
+            return await Task.FromResult(true);
         }
     }
 }

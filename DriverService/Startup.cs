@@ -40,7 +40,7 @@ namespace DriverService
             //{
                 Console.WriteLine("--> Using Local Database");
                 services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
-                    Configuration.GetConnectionString("LocalDatabase")
+                    Configuration.GetConnectionString("irfhanConn")
                 ));
             //}
 
