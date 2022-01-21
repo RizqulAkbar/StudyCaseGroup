@@ -8,6 +8,6 @@ namespace Admin.Models
     public partial class Price
     {
         public int Id { get; set; }
-        public float PricePerKm { get; set; }
+        public string PricePerKm { get; set; }
     }
 }

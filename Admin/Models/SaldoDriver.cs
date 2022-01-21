@@ -3,16 +3,16 @@ using System.Collections.Generic;
 
 #nullable disable
 
-namespace PenggunaService.Models
+namespace Admin.Models
 {
-    public partial class Saldo
+    public partial class SaldoDriver
     {
         public int SaldoId { get; set; }
-        public int PenggunaId { get; set; }
+        public int DriverId { get; set; }
         public double TotalSaldo { get; set; }
         public double MutasiSaldo { get; set; }
         public DateTime Created { get; set; }
 
-        public virtual Pengguna Pengguna { get; set; }
+        public virtual UserDriver Driver { get; set; }
     }
 }

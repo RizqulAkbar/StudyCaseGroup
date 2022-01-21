@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
-namespace Admin.Models
+namespace PenggunaService.Models
 {
     public partial class bootcampLearnDb5Context : DbContext
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 #nullable disable
 
-namespace PenggunaService.Models
+namespace Admin.Models
 {
     public partial class Saldo
     {
