@@ -50,7 +50,7 @@ namespace PenggunaService.GraphQL
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            return db.Saldos.Select(p => new OrderFee()
+            return db.SaldoPenggunas.Select(p => new OrderFee()
             {
                 PenggunaId = p.PenggunaId,
                 Fee = (float)p.MutasiSaldo,
@@ -64,7 +64,7 @@ namespace PenggunaService.GraphQL
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            return db.Saldos.Select(p => new SaldoOutput()
+            return db.SaldoPenggunas.Select(p => new SaldoOutput()
             {
                 SaldoId = p.SaldoId,
                 PenggunaId = p.PenggunaId,

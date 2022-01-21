@@ -20,7 +20,7 @@ namespace PenggunaService.Data
 
         public DbSet<Pengguna> Penggunas { get; set; }
         public DbSet<Order> Orders { get; set; }
-        public DbSet<Saldo> Saldos { get; set; }
+        public DbSet<SaldoPengguna> SaldoPenggunas { get; set; }
         public DbSet<Price> Prices { get; set; }
     }
 }
