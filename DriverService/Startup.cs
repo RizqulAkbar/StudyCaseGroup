@@ -29,20 +29,20 @@ namespace DriverService
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            //if (_env.IsProduction())
-            //{
-                //Console.WriteLine("--> Using Azure Database");
-                //services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
-                    //Configuration.GetConnectionString("AzureDatabase")
-                //));
-            //}
-            //else
-            //{
+            if (_env.IsProduction())
+            {
+                Console.WriteLine("--> Using Azure Database");
+                services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
+                    Configuration.GetConnectionString("AzureDatabase")
+                ));
+            }
+            else
+            {
                 Console.WriteLine("--> Using Local Database");
                 services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
                     Configuration.GetConnectionString("LocalDatabase")
                 ));
-            //}
+            }
 
             // graphql
             services

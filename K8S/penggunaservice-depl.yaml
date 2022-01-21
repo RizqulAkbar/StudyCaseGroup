@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: penggunaservice
-        image: rizhy/penggunaservice:latest
+        image: irfhandomahendra/penggunaservice:latest
         resources:
           limits:
             memory: "500Mi"
