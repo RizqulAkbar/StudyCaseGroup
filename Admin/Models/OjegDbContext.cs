@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace Admin.Models
 {
     public partial class OjegDbContext : DbContext
+
     {
         public OjegDbContext()
         {

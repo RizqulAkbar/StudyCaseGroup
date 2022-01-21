@@ -10,17 +10,14 @@ namespace DriverService.Models
         public int OrderId { get; set; }
         public int DriverId { get; set; }
         public int PenggunaId { get; set; }
-        public float LatPengguna { get; set; }
-        public float LongPengguna { get; set; }
-        public float? LatDriver { get; set; }
-        public float? LongDriver { get; set; }
-        public float LatTujuan { get; set; }
-        public float LongTujuan { get; set; }
-        public float Price { get; set; }
+        public double LatPengguna { get; set; }
+        public double LongPengguna { get; set; }
+        public double LatDriver { get; set; }
+        public double LongDriver { get; set; }
+        public double LatTujuan { get; set; }
+        public double LongTujuan { get; set; }
+        public double Price { get; set; }
         public string Status { get; set; }
         public DateTime Created { get; set; }
-
-        public virtual UserDriver Driver { get; set; }
-        public virtual UserPengguna Pengguna { get; set; }
     }
 }

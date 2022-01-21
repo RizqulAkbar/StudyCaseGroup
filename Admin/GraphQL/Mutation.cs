@@ -19,7 +19,7 @@ namespace Admin.GraphQL
     {
         public async Task<TransactionStatus> RegisterUserAsync(
             RegisterDto input,
-            [Service] OjegDbContext context)
+            [Service] bootcampLearnDb5Context context)
         {
             var user = context.Users.Where(o => o.Username == input.UserName).FirstOrDefault();
             if (user != null)
@@ -45,7 +45,7 @@ namespace Admin.GraphQL
 
         public async Task<TransactionStatus> RegisterDriverAsync(
             RegisterDto input,
-            [Service] OjegDbContext context)
+            [Service] bootcampLearnDb5Context context)
         {
             var user = context.Users.Where(o => o.Username == input.UserName).FirstOrDefault();
             if (user != null)
@@ -69,10 +69,44 @@ namespace Admin.GraphQL
             return await Task.FromResult(new TransactionStatus(true, "Register Was Success"));
         }
 
+        public async Task<UserToken> LoginAdminAsync(
+           LoginAdminDto input,
+           [Service] IOptions<TokenSettings> tokenSettings,
+           [Service] bootcampLearnDb5Context context)
+        {
+            var admin = context.Users.Where(o => o.Username == input.Username).FirstOrDefault();
+            if (admin == null)
+            {
+                return await Task.FromResult(new UserToken(null, null, "Username or password was invalid"));
+            }
+            bool valid = BCrypt.Net.BCrypt.Verify(input.Password, admin.Password);
+            if (valid)
+            {
+                var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSettings.Value.Key));
+                var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
+
+             
+                var expired = DateTime.Now.AddHours(3);
+                var jwtToken = new JwtSecurityToken(
+                    issuer: tokenSettings.Value.Issuer,
+                    audience: tokenSettings.Value.Audience,
+                    expires: expired,
+                    signingCredentials: credentials
+                );
+
+                return await Task.FromResult(
+                    new UserToken(new JwtSecurityTokenHandler().WriteToken(jwtToken),
+                    expired.ToString(), null));
+             
+            }
+
+            return await Task.FromResult(new UserToken(null, null, Message: "Username or password was invalid"));
+        }
+
         public async Task<UserToken> LoginPenggunaAsync(
            LoginPenggunaDto input,
            [Service] IOptions<TokenSettings> tokenSettings,
-           [Service] OjegDbContext context)
+           [Service] bootcampLearnDb5Context context)
         {
             var pengguna = context.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
             if (pengguna == null)
@@ -123,7 +157,7 @@ namespace Admin.GraphQL
         public async Task<TransactionStatus> LockUserAsync(
             int id,
             LockUser input,
-            [Service] OjegDbContext context)
+            [Service] bootcampLearnDb5Context context)
         {
             var user = context.Penggunas.Where(o => o.Id == id).FirstOrDefault();
             if (user == null)
@@ -144,7 +178,7 @@ namespace Admin.GraphQL
         public async Task<TransactionStatus> LockDriverAsync(
             int id,
             LockDriverDto input,
-            [Service] OjegDbContext context)
+            [Service] bootcampLearnDb5Context context)
         {
             var driver = context.UserDrivers.Where(o => o.DriverId == id).FirstOrDefault();
             if (driver == null)
@@ -165,7 +199,7 @@ namespace Admin.GraphQL
         public async Task<TransactionStatus> ApproveDriverAsync(
             int id,
             ApproveDriverDto input,
-            [Service] OjegDbContext context)
+            [Service] bootcampLearnDb5Context context)
         {
             var driver = context.UserDrivers.Where(o => o.DriverId == id).FirstOrDefault();
             if (driver == null)
@@ -186,7 +220,7 @@ namespace Admin.GraphQL
         public async Task<TransactionStatus> UpdatePriceAsync(
             int id,
             PriceDto input,
-            [Service] OjegDbContext context)
+            [Service] bootcampLearnDb5Context context)
         {
             var price = context.Prices.Where(o => o.Id == id).FirstOrDefault();
             if (price == null)
@@ -206,7 +240,7 @@ namespace Admin.GraphQL
         public async Task<TransactionStatus> UpdatePasswordPenggunaAsync(
             int id,
             UpdatePenggunaDto input,
-            [Service] OjegDbContext context)
+            [Service] bootcampLearnDb5Context context)
         {
             var pengguna = context.Penggunas.Where(o => o.Id == id).FirstOrDefault();
             if (pengguna == null)
@@ -227,7 +261,7 @@ namespace Admin.GraphQL
         public async Task<TransactionStatus> UpdatePasswordDriverAsync(
             int id,
             UpdateDriverDto input,
-            [Service] OjegDbContext context)
+            [Service] bootcampLearnDb5Context context)
         {
             var driver = context.UserDrivers.Where(o => o.DriverId == id).FirstOrDefault();
             if (driver == null)

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: penggunaservices-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: penggunaservice
+  template:
+    metadata:
+      labels:
+        app: penggunaservice
+    spec:
+      containers:
+      - name: penggunaservice
+        image: rizhy/penggunaservice:latest
+        resources:
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: penggunaservices-clusterip-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: penggunaservice
+  ports:
+  - name: penggunaservice
+    protocol: TCP
+    port: 80
+    targetPort: 80

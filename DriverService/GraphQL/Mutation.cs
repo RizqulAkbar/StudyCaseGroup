@@ -30,8 +30,8 @@ namespace DriverService.GraphQL
         [Authorize]
         public async Task<SaldoDriver> PullSaldoAsync(
                 float pull,
-                PriceAdmin price,
-                [Service] StudyCaseGroupContext context,
+                Price price,
+                [Service] bootcampLearnDb5Context context,
                 [Service] IHttpContextAccessor httpContextAccessor)
         {
 
@@ -66,7 +66,7 @@ namespace DriverService.GraphQL
         [Authorize]
         public async Task<UserDriver> SetPositionAsync(
                 SetPosition input,
-                [Service] StudyCaseGroupContext context,
+                [Service] bootcampLearnDb5Context context,
                 [Service] IHttpContextAccessor httpContextAccessor)
         {
             var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -100,28 +100,53 @@ namespace DriverService.GraphQL
 
         [Authorize]
         public async Task<Status> AcceptOrderAsync(
-            [Service] StudyCaseGroupContext context,
+            [Service] bootcampLearnDb5Context context,
             [Service] IHttpContextAccessor httpContextAccessor,
             [Service] IOptions<KafkaSettings> kafkaSettings)
         {
-            var accept = await KafkaHelper.AcceptOrder(kafkaSettings.Value, context);
-            if (accept > 0)
+
+            KafkaHelper.AcceptOrder(kafkaSettings.Value, context);
+            var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+            var currentDriver = context.UserDrivers.Where(o => o.DriverId == driverId).FirstOrDefault();
+            var order = context.Orders.Where(o => o.DriverId == driverId && o.Status == "Accepted").OrderByDescending(x => x.Created).FirstOrDefault();
+
+            var pCoord = new GeoCoordinate(order.LatPengguna, order.LongPengguna);
+            var dCoord = new GeoCoordinate(currentDriver.LatDriver, currentDriver.LongDriver);
+
+            var s = dCoord.GetDistanceTo(pCoord)/1000;
+
+            //Check if driver too far
+            if (s > 30)
             {
-                var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-                var currentPengguna = context.UserDrivers.Where(o => o.DriverId == driverId).FirstOrDefault();
-                return new Status(true, "Order was cancelled, your balance has refunded");
+                 order.Status = "Failed";
+                    
+                 context.Orders.Update(order);
+                 await context.SaveChangesAsync();
+
+                 return new Status(true, "Order was failed, Driver too far");
             }
-            else
+
+            //check if current driver exist
+            if (currentDriver != null)
             {
-                return new Status(false, "Order was cancelled, failed to refund your balance");
+                 order.DriverId = currentDriver.DriverId;
+                 order.LatDriver = (float)currentDriver.LatDriver;
+                 order.LongDriver = (float)currentDriver.LongDriver;
+
+                 context.Orders.Update(order);
+                 await context.SaveChangesAsync();
+
             }
+
+            return new Status(true, "Order Accepted");
         }
     
 
         [Authorize]
         public async Task<OrderOutput> FinishOrderAsync(
             OrderInput input,
-            [Service] StudyCaseGroupContext context,
+            [Service] bootcampLearnDb5Context context,
              [Service] IHttpContextAccessor httpContextAccessor)
         {
             //Change status order
@@ -169,15 +194,15 @@ namespace DriverService.GraphQL
         //User
 
         //Register
-        public async Task<Status> RegisterAsync(
+        public async Task<UserData> RegisterAsync(
             RegisterUser input,
-            [Service] StudyCaseGroupContext context,
+            [Service] bootcampLearnDb5Context context,
             [Service] IOptions<KafkaSettings> kafkaSettings)
         {
             var user = context.UserDrivers.Where(o => o.Username == input.Username).FirstOrDefault();
             if (user != null)
             {
-                return await Task.FromResult(new Status(true, "Username sudah ada"));
+                return await Task.FromResult(new UserData());
             }
             var newUser = new UserDriver
             {
@@ -208,35 +233,24 @@ namespace DriverService.GraphQL
                 context.SaldoDrivers.Add(newSaldo);
                 await context.SaveChangesAsync();
 
-            //return await Task.FromResult(new UserData
-            //{
-            //    Id = newUser.DriverId,
-            //    Username = newUser.Username,
-            //    Email = newUser.Email,
-            //    Firstname = newUser.Firstname,
-            //    Lastname = newUser.Lastname,
-            //    LatDriver = (float)newUser.LatDriver,
-            //    LongDriver = (float)newUser.LongDriver
-            //});
+            return await Task.FromResult(new UserData
+            {
+                Id = newUser.DriverId,
+                Username = newUser.Username,
+                Email = newUser.Email,
+                Firstname = newUser.Firstname,
+                Lastname = newUser.Lastname,
+                LatDriver = (float)newUser.LatDriver,
+                LongDriver = (float)newUser.LongDriver
+            });
 
-            var key = "driver-add-" + DateTime.Now.ToString();
-            var val = JObject.FromObject(newUser).ToString(Formatting.None);
-            var result = await KafkaHelper.SendMessage(kafkaSettings.Value, "addDriver", key, val);
-            await KafkaHelper.SendMessage(kafkaSettings.Value, "addDriver", key, val);
-
-            var ret = new Status(result, "");
-            if (!result)
-                ret = new Status(result, "Failed to submit data");
-
-
-            return await Task.FromResult(ret);
         }
 
         //Login
         public async Task<UserToken> LoginAsync(
                 LoginUser input,
                 [Service] IOptions<TokenSettings> tokenSettings,
-                [Service] StudyCaseGroupContext context)
+                [Service] bootcampLearnDb5Context context)
         {
             var user = context.UserDrivers.Where(o => o.Username == input.Username).FirstOrDefault();
             if (user == null)
