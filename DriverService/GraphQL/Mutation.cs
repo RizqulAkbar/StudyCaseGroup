@@ -109,7 +109,7 @@ namespace DriverService.GraphQL
             var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
             var currentDriver = context.UserDrivers.Where(o => o.DriverId == driverId).FirstOrDefault();
-            var order = context.Orders.Where(o => o.DriverId == driverId && o.Status == "Accepted").OrderByDescending(x => x.Created).FirstOrDefault();
+            var order = context.Orders.Where(o => o.Status == "Accepted").OrderByDescending(x => x.Created).FirstOrDefault();
 
             var pCoord = new GeoCoordinate(order.LatPengguna, order.LongPengguna);
             var dCoord = new GeoCoordinate(currentDriver.LatDriver, currentDriver.LongDriver);
@@ -124,7 +124,19 @@ namespace DriverService.GraphQL
                  context.Orders.Update(order);
                  await context.SaveChangesAsync();
 
-                 return new Status(true, "Order was failed, Driver too far");
+                var currentPengguna = context.Penggunas.Where(o => o.Id == order.PenggunaId).FirstOrDefault();
+                var oldSaldo = context.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.Id).OrderBy(o => o.SaldoId).LastOrDefault();
+                var newSaldo = new SaldoPengguna()
+                {
+                    PenggunaId = currentPengguna.Id,
+                    TotalSaldo = (oldSaldo.TotalSaldo + order.Price),
+                    MutasiSaldo = +order.Price,
+                    Created = DateTime.Now
+                };
+                context.SaldoPenggunas.Add(newSaldo);
+                await context.SaveChangesAsync();
+
+                return new Status(true, "Order was failed, Driver too far");
             }
 
             //check if current driver exist

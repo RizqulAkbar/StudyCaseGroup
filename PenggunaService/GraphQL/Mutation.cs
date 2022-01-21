@@ -46,6 +46,7 @@ namespace PenggunaService.GraphQL
                 Latitude = input.Latitude,
                 Longitude = input.Longitude,
                 Created = DateTime.Now,
+                Updated = DateTime.Now,
                 IsLocked = false
             };
             db.Penggunas.Add(newPengguna);
@@ -127,7 +128,7 @@ namespace PenggunaService.GraphQL
         )
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            var currentPengguna = db.Penggunas.Where(o => o.Id == penggunaId).FirstOrDefault();
+            var currentPengguna = db.Penggunas.Where(o => o.Id == penggunaId).FirstOrDefault();            
             var currentSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.Id).OrderBy(o => o.SaldoId).LastOrDefault();
             var pricePerKm = db.Prices.OrderBy(o => o.Id).LastOrDefault();
 

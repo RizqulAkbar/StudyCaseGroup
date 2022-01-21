@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -16,19 +17,31 @@ namespace PenggunaService
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            _env = env;
         }
-
         public IConfiguration Configuration { get; }
+        private readonly IWebHostEnvironment _env;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<bootcampLearnDb5Context>(options =>
-                 options.UseSqlServer(Configuration.GetConnectionString("LocalConnection"))
-            );
+            if (_env.IsProduction())
+            {
+                Console.WriteLine("--> Using Azure Database");
+                services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
+                    Configuration.GetConnectionString("AzureDb")
+                ));
+            }
+            else
+            {
+                Console.WriteLine("--> Using Local Database");
+                services.AddDbContext<bootcampLearnDb5Context>(opt => opt.UseSqlServer(
+                    Configuration.GetConnectionString("LocalConnection")
+                ));
+            }
             services
                 .AddGraphQLServer()
                 .AddQueryType<Query>()
