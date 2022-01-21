@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: adminservice
-        image: rizhy/adminservice:latest
+        image: suzevaa/adminservice:latest
         resources:
           limits:
             memory: "500Mi"
