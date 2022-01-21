@@ -53,14 +53,14 @@ namespace PenggunaService.GraphQL
             await db.SaveChangesAsync();
             var currentPengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
 
-            var newSaldo = new Saldo
+            var newSaldo = new SaldoPengguna
             {
                 PenggunaId = currentPengguna.PenggunaId,
                 TotalSaldo = input.Saldo,
                 MutasiSaldo = null,
                 Created = DateTime.Now
             };
-            db.Saldos.Add(newSaldo);
+            db.SaldoPenggunas.Add(newSaldo);
             await db.SaveChangesAsync();
 
             return new Status(true, "New Pengguna Registration Successful");
@@ -129,7 +129,7 @@ namespace PenggunaService.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var currentSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+            var currentSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
             var pricePerKm = db.Prices.OrderBy(o => o.PriceId).LastOrDefault();
 
             var distance = await LocationHelper.GetDistance(currentPengguna.Latitude, currentPengguna.Longitude, input.LatTujuan, input.LongTujuan);
@@ -155,15 +155,15 @@ namespace PenggunaService.GraphQL
                 var val = JObject.FromObject(newOrder).ToString(Formatting.None);
                 await KafkaHelper.SendMessage(kafkaSettings.Value, "Order", key, val);
 
-                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
-                var newSaldo = new Saldo()
+                var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+                var newSaldo = new SaldoPengguna()
                 {
                     PenggunaId = currentPengguna.PenggunaId,
                     TotalSaldo = oldSaldo.TotalSaldo - price,
                     MutasiSaldo = -price,
                     Created = DateTime.Now
                 };
-                db.Saldos.Add(newSaldo);
+                db.SaldoPenggunas.Add(newSaldo);
                 await db.SaveChangesAsync();
                 return new Status(true, $"Order Successful, your order fee: {price.ToString()}");
             }
@@ -182,17 +182,17 @@ namespace PenggunaService.GraphQL
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+            var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
             if (oldSaldo != null)
             {
-                var newSaldo = new Saldo()
+                var newSaldo = new SaldoPengguna()
                 {
                     PenggunaId = currentPengguna.PenggunaId,
                     TotalSaldo = oldSaldo.TotalSaldo + topUp,
                     MutasiSaldo = topUp,
                     Created = DateTime.Now
                 };
-                db.Saldos.Add(newSaldo);
+                db.SaldoPenggunas.Add(newSaldo);
                 await db.SaveChangesAsync();
                 return new Status(true, $"Top Up Successful, {topUp} has been added to your balance");
             }
@@ -214,18 +214,18 @@ namespace PenggunaService.GraphQL
             {
                 var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
                 var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-                var oldSaldo = db.Saldos.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+                var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
                 var refund = db.Orders.Where(o => o.PenggunaId == currentPengguna.PenggunaId && o.OrderId == cancel).FirstOrDefault();
                 if (oldSaldo != null)
                 {
-                    var newSaldo = new Saldo()
+                    var newSaldo = new SaldoPengguna()
                     {
                         PenggunaId = currentPengguna.PenggunaId,
                         TotalSaldo = oldSaldo.TotalSaldo + refund.Price,
                         MutasiSaldo = refund.Price,
                         Created = DateTime.Now
                     };
-                    db.Saldos.Add(newSaldo);
+                    db.SaldoPenggunas.Add(newSaldo);
                     await db.SaveChangesAsync();
                 }
                 return new Status(true, $"OrderId: {cancel.ToString()}was cancelled, your balance has refunded");
