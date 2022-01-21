@@ -16,7 +16,6 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PenggunaService.Auth;
-using PenggunaService.Data;
 using PenggunaService.InputMutation;
 using PenggunaService.Kafka;
 using PenggunaService.Location;
@@ -29,7 +28,7 @@ namespace PenggunaService.GraphQL
     {
         public async Task<Status> RegisterAsync(
             Register input,
-            [Service] PenggunaDbContext db
+            [Service] bootcampLearnDb5Context db
         )
         {
             var pengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
@@ -47,7 +46,7 @@ namespace PenggunaService.GraphQL
                 Latitude = input.Latitude,
                 Longitude = input.Longitude,
                 Created = DateTime.Now,
-                isLocked = false
+                IsLocked = false
             };
             db.Penggunas.Add(newPengguna);
             await db.SaveChangesAsync();
@@ -55,7 +54,7 @@ namespace PenggunaService.GraphQL
 
             var newSaldo = new SaldoPengguna
             {
-                PenggunaId = currentPengguna.PenggunaId,
+                PenggunaId = currentPengguna.Id,
                 TotalSaldo = input.Saldo,
                 MutasiSaldo = null,
                 Created = DateTime.Now
@@ -69,13 +68,13 @@ namespace PenggunaService.GraphQL
         public async Task<TokenPengguna> LoginAsync(
             Login input,
             [Service] IOptions<TokenSettings> tokenSettings,
-            [Service] PenggunaDbContext db
+            [Service] bootcampLearnDb5Context db
         )
         {
             var pengguna = db.Penggunas.Where(o => o.Username == input.Username).FirstOrDefault();
             if (pengguna != null)
             {
-                if (pengguna.isLocked == true)
+                if (pengguna.IsLocked == true)
                 {
                     return await Task.FromResult(new TokenPengguna(
                         null, null, "Your account is suspended, please contact your admin"));
@@ -90,7 +89,7 @@ namespace PenggunaService.GraphQL
 
                         var claims = new List<Claim>();
                         claims.Add(new Claim(ClaimTypes.Name, pengguna.Username));
-                        claims.Add(new Claim(ClaimTypes.NameIdentifier, pengguna.PenggunaId.ToString()));
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, pengguna.Id.ToString()));
 
                         var expired = DateTime.Now.AddHours(1);
                         var jwtToken = new JwtSecurityToken(
@@ -122,15 +121,15 @@ namespace PenggunaService.GraphQL
         [Authorize]
         public async Task<Status> OrderAsync(
             OrderInput input,
-            [Service] PenggunaDbContext db,
+            [Service] bootcampLearnDb5Context db,
             [Service] IHttpContextAccessor httpContextAccessor,
             [Service] IOptions<KafkaSettings> kafkaSettings
         )
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var currentSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
-            var pricePerKm = db.Prices.OrderBy(o => o.PriceId).LastOrDefault();
+            var currentPengguna = db.Penggunas.Where(o => o.Id == penggunaId).FirstOrDefault();
+            var currentSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.Id).OrderBy(o => o.SaldoId).LastOrDefault();
+            var pricePerKm = db.Prices.OrderBy(o => o.Id).LastOrDefault();
 
             var distance = await LocationHelper.GetDistance(currentPengguna.Latitude, currentPengguna.Longitude, input.LatTujuan, input.LongTujuan);
             var price = distance * pricePerKm.PricePerKm;
@@ -140,7 +139,7 @@ namespace PenggunaService.GraphQL
                 var newOrder = new Order
                 {
                     DriverId = null,
-                    PenggunaId = currentPengguna.PenggunaId,
+                    PenggunaId = currentPengguna.Id,
                     LatPengguna = currentPengguna.Latitude,
                     LongPengguna = currentPengguna.Longitude,
                     LatDriver = null,
@@ -155,12 +154,12 @@ namespace PenggunaService.GraphQL
                 var val = JObject.FromObject(newOrder).ToString(Formatting.None);
                 await KafkaHelper.SendMessage(kafkaSettings.Value, "Order", key, val);
 
-                var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+                var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.Id).OrderBy(o => o.SaldoId).LastOrDefault();
                 var newSaldo = new SaldoPengguna()
                 {
-                    PenggunaId = currentPengguna.PenggunaId,
-                    TotalSaldo = oldSaldo.TotalSaldo - price,
-                    MutasiSaldo = -price,
+                    PenggunaId = currentPengguna.Id,
+                    TotalSaldo = oldSaldo.TotalSaldo - (float)price,
+                    MutasiSaldo = (float)-price,
                     Created = DateTime.Now
                 };
                 db.SaldoPenggunas.Add(newSaldo);
@@ -176,18 +175,18 @@ namespace PenggunaService.GraphQL
         [Authorize]
         public async Task<Status> TopUpAsync(
             float topUp,
-            [Service] PenggunaDbContext db,
+            [Service] bootcampLearnDb5Context db,
             [Service] IHttpContextAccessor httpContextAccessor
         )
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+            var currentPengguna = db.Penggunas.Where(o => o.Id == penggunaId).FirstOrDefault();
+            var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.Id).OrderBy(o => o.SaldoId).LastOrDefault();
             if (oldSaldo != null)
             {
                 var newSaldo = new SaldoPengguna()
                 {
-                    PenggunaId = currentPengguna.PenggunaId,
+                    PenggunaId = currentPengguna.Id,
                     TotalSaldo = oldSaldo.TotalSaldo + topUp,
                     MutasiSaldo = topUp,
                     Created = DateTime.Now
@@ -204,7 +203,7 @@ namespace PenggunaService.GraphQL
 
         [Authorize]
         public async Task<Status> CancelOrderAsync(
-            [Service] PenggunaDbContext db,
+            [Service] bootcampLearnDb5Context db,
             [Service] IHttpContextAccessor httpContextAccessor,
             [Service] IOptions<KafkaSettings> kafkaSettings
         )
@@ -213,16 +212,16 @@ namespace PenggunaService.GraphQL
             if (cancel > 0)
             {
                 var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-                var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-                var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
-                var refund = db.Orders.Where(o => o.PenggunaId == currentPengguna.PenggunaId && o.OrderId == cancel).FirstOrDefault();
+                var currentPengguna = db.Penggunas.Where(o => o.Id == penggunaId).FirstOrDefault();
+                var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.Id).OrderBy(o => o.SaldoId).LastOrDefault();
+                var refund = db.Orders.Where(o => o.PenggunaId == currentPengguna.Id && o.OrderId == cancel).FirstOrDefault();
                 if (oldSaldo != null)
                 {
                     var newSaldo = new SaldoPengguna()
                     {
-                        PenggunaId = currentPengguna.PenggunaId,
-                        TotalSaldo = oldSaldo.TotalSaldo + refund.Price,
-                        MutasiSaldo = refund.Price,
+                        PenggunaId = currentPengguna.Id,
+                        TotalSaldo = oldSaldo.TotalSaldo + (float)refund.Price,
+                        MutasiSaldo = (float)refund.Price,
                         Created = DateTime.Now
                     };
                     db.SaldoPenggunas.Add(newSaldo);
