@@ -22,8 +22,8 @@ namespace PenggunaService.Models
         public double Longitude { get; set; }
         public bool IsLocked { get; set; }
         public DateTime Created { get; set; }
-        public bool isLocked { get; set; }
-        public ICollection<Order> Orders { get; set; }
-        public ICollection<SaldoPengguna> Saldo { get; set; }
+        public DateTime Updated { get; set; }
+
+        public virtual ICollection<SaldoPengguna> SaldoPenggunas { get; set; }
     }
 }

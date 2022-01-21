@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DriverService", "DriverServ
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Admin", "Admin\Admin.csproj", "{BECCD366-8E79-422F-A946-FD9F53ABE502}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PenggunaService", "PenggunaService\PenggunaService.csproj", "{6294F00B-43F9-4BDE-8A94-CC8EA6B9F4AB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{BECCD366-8E79-422F-A946-FD9F53ABE502}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BECCD366-8E79-422F-A946-FD9F53ABE502}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BECCD366-8E79-422F-A946-FD9F53ABE502}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6294F00B-43F9-4BDE-8A94-CC8EA6B9F4AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6294F00B-43F9-4BDE-8A94-CC8EA6B9F4AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6294F00B-43F9-4BDE-8A94-CC8EA6B9F4AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6294F00B-43F9-4BDE-8A94-CC8EA6B9F4AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
