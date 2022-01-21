@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PenggunaService.Models
 {
-    public class Saldo
+    public class SaldoPengguna
     {
         [Key]
         public int SaldoId { get; set; }
