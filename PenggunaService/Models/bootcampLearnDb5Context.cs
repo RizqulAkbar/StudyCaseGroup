@@ -20,8 +20,8 @@ namespace PenggunaService.Models
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<Pengguna> Penggunas { get; set; }
         public virtual DbSet<Price> Prices { get; set; }
-        public virtual DbSet<Saldo> Saldos { get; set; }
         public virtual DbSet<SaldoDriver> SaldoDrivers { get; set; }
+        public virtual DbSet<SaldoPengguna> SaldoPenggunas { get; set; }
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<UserDriver> UserDrivers { get; set; }
 
@@ -40,16 +40,9 @@ namespace PenggunaService.Models
 
             modelBuilder.Entity<Order>(entity =>
             {
-                entity.Property(e => e.OrderId).HasColumnName("OrderID");
-
                 entity.Property(e => e.Created).HasColumnType("datetime");
 
-                entity.Property(e => e.DriverId).HasColumnName("DriverID");
-
-                entity.Property(e => e.PenggunaId).HasColumnName("PenggunaID");
-
                 entity.Property(e => e.Status)
-                    .IsRequired()
                     .HasMaxLength(50)
                     .IsUnicode(false);
             });
@@ -87,27 +80,6 @@ namespace PenggunaService.Models
                     .IsUnicode(false);
             });
 
-            modelBuilder.Entity<Price>(entity =>
-            {
-                entity.Property(e => e.PricePerKm)
-                    .IsRequired()
-                    .HasMaxLength(10)
-                    .IsFixedLength(true);
-            });
-
-            modelBuilder.Entity<Saldo>(entity =>
-            {
-                entity.ToTable("Saldo");
-
-                entity.Property(e => e.Created).HasColumnType("datetime");
-
-                entity.HasOne(d => d.Pengguna)
-                    .WithMany(p => p.Saldos)
-                    .HasForeignKey(d => d.PenggunaId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Saldo_Penggunas");
-            });
-
             modelBuilder.Entity<SaldoDriver>(entity =>
             {
                 entity.HasKey(e => e.SaldoId);
@@ -121,6 +93,22 @@ namespace PenggunaService.Models
                     .HasForeignKey(d => d.DriverId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_SaldoDriver_UserDriver");
+            });
+
+            modelBuilder.Entity<SaldoPengguna>(entity =>
+            {
+                entity.HasKey(e => e.SaldoId)
+                    .HasName("PK_Saldo");
+
+                entity.ToTable("SaldoPengguna");
+
+                entity.Property(e => e.Created).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Pengguna)
+                    .WithMany(p => p.SaldoPenggunas)
+                    .HasForeignKey(d => d.PenggunaId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Saldo_Penggunas");
             });
 
             modelBuilder.Entity<User>(entity =>

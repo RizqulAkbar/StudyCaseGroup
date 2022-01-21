@@ -9,7 +9,7 @@ namespace PenggunaService.Models
     {
         public Pengguna()
         {
-            Saldos = new HashSet<Saldo>();
+            SaldoPenggunas = new HashSet<SaldoPengguna>();
         }
 
         public int Id { get; set; }
@@ -24,6 +24,6 @@ namespace PenggunaService.Models
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
 
-        public virtual ICollection<Saldo> Saldos { get; set; }
+        public virtual ICollection<SaldoPengguna> SaldoPenggunas { get; set; }
     }
 }

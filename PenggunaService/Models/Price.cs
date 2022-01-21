@@ -8,6 +8,6 @@ namespace PenggunaService.Models
     public partial class Price
     {
         public int Id { get; set; }
-        public string PricePerKm { get; set; }
+        public double PricePerKm { get; set; }
     }
 }
