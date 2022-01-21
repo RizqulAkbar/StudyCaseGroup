@@ -16,7 +16,7 @@ namespace PenggunaService.Models
         public double? LongDriver { get; set; }
         public double LatTujuan { get; set; }
         public double LongTujuan { get; set; }
-        public double Price { get; set; }
+        public float Price { get; set; }
         public string Status { get; set; }
         public DateTime Created { get; set; }
     }

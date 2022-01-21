@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using PenggunaService.Data;
+using PenggunaService.Models;
 
 namespace PenggunaService
 {
@@ -15,7 +15,7 @@ namespace PenggunaService
 
             using (var scope = host.Services.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<PenggunaDbContext>();
+                var db = scope.ServiceProvider.GetRequiredService<bootcampLearnDb5Context>();
                 db.Database.Migrate(); // apply the migrations
             }
             Console.WriteLine("Database Migration");

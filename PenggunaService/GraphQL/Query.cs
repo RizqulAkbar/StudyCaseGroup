@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using HotChocolate;
 using HotChocolate.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using PenggunaService.Data;
 using PenggunaService.Models;
 using PenggunaService.OutputQuery;
 
@@ -14,11 +13,11 @@ namespace PenggunaService.GraphQL
 {
     public class Query
     {
-        public IQueryable<PenggunaOutput> GetPenggunas([Service] PenggunaDbContext db)
+        public IQueryable<PenggunaOutput> GetPenggunas([Service] bootcampLearnDb5Context db)
         {
             return db.Penggunas.Select(p => new PenggunaOutput()
             {
-                PenggunaId = p.PenggunaId,
+                PenggunaId = p.Id,
                 Email = p.Email,
                 Fullname = $"{p.Firstname} {p.Lastname}",
                 Username = p.Username,
@@ -29,13 +28,13 @@ namespace PenggunaService.GraphQL
 
         [Authorize]
         public IQueryable<PenggunaOutput> GetSeeMyProfile(
-            [Service] PenggunaDbContext db,
+            [Service] bootcampLearnDb5Context db,
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
             return db.Penggunas.Select(p => new PenggunaOutput()
             {
-                PenggunaId = p.PenggunaId,
+                PenggunaId = p.Id,
                 Email = p.Email,
                 Fullname = $"{p.Firstname} {p.Lastname}",
                 Username = p.Username,
@@ -46,7 +45,7 @@ namespace PenggunaService.GraphQL
 
         [Authorize]
         public IQueryable<OrderFee> GetOrderFees(
-            [Service] PenggunaDbContext db,
+            [Service] bootcampLearnDb5Context db,
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -60,7 +59,7 @@ namespace PenggunaService.GraphQL
 
         [Authorize]
         public IEnumerable<SaldoOutput> GetSaldos(
-            [Service] PenggunaDbContext db,
+            [Service] bootcampLearnDb5Context db,
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -76,7 +75,7 @@ namespace PenggunaService.GraphQL
 
         [Authorize]
         public IEnumerable<OrderHistory> GetOrderHistory(
-           [Service] PenggunaDbContext db,
+           [Service] bootcampLearnDb5Context db,
            [Service] IHttpContextAccessor httpContextAccessor)
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);

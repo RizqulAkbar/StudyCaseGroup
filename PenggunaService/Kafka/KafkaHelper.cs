@@ -10,7 +10,6 @@ using Confluent.Kafka.Admin;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using PenggunaService.Data;
 using PenggunaService.Models;
 
 namespace PenggunaService.Kafka
@@ -72,7 +71,7 @@ namespace PenggunaService.Kafka
             return await Task.FromResult(succeed);
         }
 
-        public static async Task<int> CancelOrder(KafkaSettings settings, PenggunaDbContext db)
+        public static async Task<int> CancelOrder(KafkaSettings settings, bootcampLearnDb5Context db)
         {
             var orderId = 0;
             var Serverconfig = new ConsumerConfig
