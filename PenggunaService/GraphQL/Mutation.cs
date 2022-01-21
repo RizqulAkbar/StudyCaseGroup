@@ -128,9 +128,9 @@ namespace PenggunaService.GraphQL
         )
         {
             var penggunaId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            var currentPengguna = db.Penggunas.Where(o => o.PenggunaId == penggunaId).FirstOrDefault();
-            var currentSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
-            var pricePerKm = db.Prices.OrderBy(o => o.PriceId).LastOrDefault();
+            var currentPengguna = db.Penggunas.Where(o => o.Id == penggunaId).FirstOrDefault();
+            var currentSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.Id).OrderBy(o => o.SaldoId).LastOrDefault();
+            var pricePerKm = db.Prices.OrderBy(o => o.Id).LastOrDefault();
 
             var distance = await LocationHelper.GetDistance(currentPengguna.Latitude, currentPengguna.Longitude, input.LatTujuan, input.LongTujuan);
             var price = distance * pricePerKm.PricePerKm;
@@ -140,7 +140,7 @@ namespace PenggunaService.GraphQL
                 var newOrder = new Order
                 {
                     DriverId = null,
-                    PenggunaId = currentPengguna.PenggunaId,
+                    PenggunaId = currentPengguna.Id,
                     LatPengguna = currentPengguna.Latitude,
                     LongPengguna = currentPengguna.Longitude,
                     LatDriver = null,
@@ -155,11 +155,11 @@ namespace PenggunaService.GraphQL
                 var val = JObject.FromObject(newOrder).ToString(Formatting.None);
                 await KafkaHelper.SendMessage(kafkaSettings.Value, "Order", key, val);
 
-                var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.PenggunaId).OrderBy(o => o.SaldoId).LastOrDefault();
+                var oldSaldo = db.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.Id).OrderBy(o => o.SaldoId).LastOrDefault();
                 var newSaldo = new SaldoPengguna()
                 {
-                    PenggunaId = currentPengguna.PenggunaId,
-                    TotalSaldo = oldSaldo.TotalSaldo - price,
+                    PenggunaId = currentPengguna.Id,
+                    TotalSaldo = (float)(oldSaldo.TotalSaldo + price),
                     MutasiSaldo = -price,
                     Created = DateTime.Now
                 };

@@ -124,7 +124,19 @@ namespace DriverService.GraphQL
                  context.Orders.Update(order);
                  await context.SaveChangesAsync();
 
-                 return new Status(true, "Order was failed, Driver too far");
+                var currentPengguna = context.Penggunas.Where(o => o.Id == order.PenggunaId).FirstOrDefault();
+                var oldSaldo = context.SaldoPenggunas.Where(o => o.PenggunaId == currentPengguna.Id).OrderBy(o => o.SaldoId).LastOrDefault();
+                var newSaldo = new SaldoPengguna()
+                {
+                    PenggunaId = currentPengguna.Id,
+                    TotalSaldo = (oldSaldo.TotalSaldo + order.Price),
+                    MutasiSaldo = +order.Price,
+                    Created = DateTime.Now
+                };
+                context.SaldoPenggunas.Add(newSaldo);
+                await context.SaveChangesAsync();
+
+                return new Status(true, "Order was failed, Driver too far");
             }
 
             //check if current driver exist
