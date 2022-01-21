@@ -158,8 +158,8 @@ namespace PenggunaService.GraphQL
                 var newSaldo = new SaldoPengguna()
                 {
                     PenggunaId = currentPengguna.Id,
-                    TotalSaldo = oldSaldo.TotalSaldo - (float)price,
-                    MutasiSaldo = (float)-price,
+                    TotalSaldo = oldSaldo.TotalSaldo - price,
+                    MutasiSaldo = -price,
                     Created = DateTime.Now
                 };
                 db.SaldoPenggunas.Add(newSaldo);
@@ -220,8 +220,8 @@ namespace PenggunaService.GraphQL
                     var newSaldo = new SaldoPengguna()
                     {
                         PenggunaId = currentPengguna.Id,
-                        TotalSaldo = oldSaldo.TotalSaldo + (float)refund.Price,
-                        MutasiSaldo = (float)refund.Price,
+                        TotalSaldo = oldSaldo.TotalSaldo + refund.Price,
+                        MutasiSaldo = refund.Price,
                         Created = DateTime.Now
                     };
                     db.SaldoPenggunas.Add(newSaldo);

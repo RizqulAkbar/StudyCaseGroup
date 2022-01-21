@@ -87,7 +87,7 @@ namespace PenggunaService.GraphQL
                 StartingLocation = $"Lat: {p.LatPengguna.ToString()}, Long: {p.LongPengguna.ToString()}",
                 Destination = $"Lat: {p.LatTujuan.ToString()}, Long: {p.LongTujuan.ToString()}",
                 Created = p.Created,
-                Price = (float)p.Price,
+                Price = p.Price,
                 Status = p.Status
             }).Where(o => o.PenggunaId == penggunaId && o.Status == "Finished").AsQueryable();
         }
