@@ -1,5 +1,6 @@
 using DriverService.Data;
 using DriverService.GraphQL;
+using DriverService.Kafka;
 using DriverService.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -49,6 +50,8 @@ namespace DriverService
                 .AddQueryType<Query>()
                 .AddMutationType<Mutation>()
                 .AddAuthorization();
+
+            services.Configure<KafkaSettings>(Configuration.GetSection("KafkaSettings"));
 
             services.AddHttpContextAccessor();
             services.AddControllers();

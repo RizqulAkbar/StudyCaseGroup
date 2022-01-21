@@ -109,7 +109,7 @@ namespace DriverService.GraphQL
             var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
             var currentDriver = context.UserDrivers.Where(o => o.DriverId == driverId).FirstOrDefault();
-            var order = context.Orders.Where(o => o.DriverId == driverId && o.Status == "Accepted").OrderByDescending(x => x.Created).FirstOrDefault();
+            var order = context.Orders.Where(o => o.Status == "Accepted").OrderByDescending(x => x.Created).FirstOrDefault();
 
             var pCoord = new GeoCoordinate(order.LatPengguna, order.LongPengguna);
             var dCoord = new GeoCoordinate(currentDriver.LatDriver, currentDriver.LongDriver);
