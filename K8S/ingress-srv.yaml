@@ -17,8 +17,6 @@ spec:
             name: driverservices-clusterip-srv
             port:
               number: 80
-spec:
-  rules:
   - host: BantengAdmin.com
     http:
       paths:
@@ -29,8 +27,6 @@ spec:
             name: adminservices-clusterip-srv
             port:
               number: 80
-spec:
-  rules:
   - host: BantengPengguna.com
     http:
       paths:
