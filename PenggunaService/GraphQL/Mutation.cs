@@ -228,11 +228,11 @@ namespace PenggunaService.GraphQL
                     db.SaldoPenggunas.Add(newSaldo);
                     await db.SaveChangesAsync();
                 }
-                return new Status(true, $"OrderId: {cancel.ToString()}was cancelled, your balance has refunded");
+                return new Status(true, $"OrderId: {cancel.ToString()} was cancelled, your balance has refunded");
             }
             else
             {
-                return new Status(false, $"OrderId: {cancel.ToString()}was cancelled, failed to refund your balance");
+                return new Status(false, $"OrderId: {cancel.ToString()} was cancelled, failed to refund your balance");
             }
         }
     }
