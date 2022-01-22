@@ -13,12 +13,12 @@ namespace PenggunaService
         {
             var host = CreateHostBuilder(args).Build();
 
-            using (var scope = host.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<bootcampLearnDb5Context>();
-                db.Database.Migrate(); // apply the migrations
-            }
-            Console.WriteLine("Database Migration");
+            // using (var scope = host.Services.CreateScope())
+            // {
+            //     var db = scope.ServiceProvider.GetRequiredService<bootcampLearnDb5Context>();
+            //     db.Database.Migrate(); // apply the migrations
+            // }
+            // Console.WriteLine("Database Migration");
             host.Run(); // start handling requests
         }
 
