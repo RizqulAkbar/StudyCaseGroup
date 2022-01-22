@@ -48,7 +48,16 @@ namespace PenggunaService
                 .AddMutationType<Mutation>()
                 .AddAuthorization();
             
-            services.Configure<KafkaSettings>(Configuration.GetSection("KafkaSettings"));
+            if (_env.IsProduction())
+            {
+                Console.WriteLine("--> Using Kafka Kubernetes");
+                services.Configure<KafkaSettings>(Configuration.GetSection("KafkaSettingsProd"));
+            }
+            else
+            {
+                Console.WriteLine("--> Using Kafka Local");
+                services.Configure<KafkaSettings>(Configuration.GetSection("KafkaSettings"));
+            }
 
             services.AddHttpContextAccessor();
             services.AddControllers();
