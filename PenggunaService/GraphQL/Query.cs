@@ -89,7 +89,7 @@ namespace PenggunaService.GraphQL
                 Created = p.Created,
                 Price = p.Price,
                 Status = p.Status
-            }).Where(o => o.PenggunaId == penggunaId && o.Status == "Finished").AsQueryable();
+            }).Where(o => o.PenggunaId == penggunaId && (o.Status == "Finished" || o.Status == "Failed")).AsQueryable();
         }
     }
 }
