@@ -37,10 +37,10 @@ namespace DriverService.GraphQL
             return context.Orders.Where(p => p.DriverId == driverId);
         }
 
-        public IQueryable<Price> GetPriceAdmin(
+        public Price GetPriceAdmin(
             [Service] bootcampLearnDb5Context context)
         {
-            return context.Prices;
+            return context.Prices.OrderByDescending(x => x.Id).FirstOrDefault();;
         }
     }
 }

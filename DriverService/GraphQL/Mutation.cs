@@ -155,15 +155,13 @@ namespace DriverService.GraphQL
     
 
         [Authorize]
-        public async Task<OrderOutput> FinishOrderAsync(
-            OrderInput input,
+        public async Task<Status> FinishOrderAsync(
             [Service] bootcampLearnDb5Context context,
              [Service] IHttpContextAccessor httpContextAccessor)
         {
             //Change status order
             var driverId = Convert.ToInt32(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            var order = context.Orders.Where(o => o.DriverId == driverId && o.PenggunaId == input.PenggunaID 
-            && o.Status == "Accepted").FirstOrDefault();
+            var order = context.Orders.Where(o => o.DriverId == driverId && o.Status == "Accepted").FirstOrDefault();
             if (order == null)
             {
                 Console.WriteLine("Order Tidak ada");
@@ -198,7 +196,7 @@ namespace DriverService.GraphQL
 
             }
 
-            return new OrderOutput(order);
+            return new Status(true, "Order Finished");
         }
 
 
