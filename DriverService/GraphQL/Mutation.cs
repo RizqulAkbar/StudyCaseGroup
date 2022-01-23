@@ -110,6 +110,20 @@ namespace DriverService.GraphQL
             var currentDriver = context.UserDrivers.Where(o => o.DriverId == driverId).FirstOrDefault();
             var order = context.Orders.Where(o => o.Status == "Accepted").OrderByDescending(x => x.Created).FirstOrDefault();
 
+            //check if current driver exist
+            //insert driver data
+            if (currentDriver != null)
+            {
+                 order.DriverId = currentDriver.DriverId;
+                 order.LatDriver = (float)currentDriver.LatDriver;
+                 order.LongDriver = (float)currentDriver.LongDriver;
+
+                 context.Orders.Update(order);
+                 await context.SaveChangesAsync();
+
+            }
+
+            //Get Distance
             var pCoord = new GeoCoordinate(order.LatPengguna, order.LongPengguna);
             var dCoord = new GeoCoordinate(currentDriver.LatDriver, currentDriver.LongDriver);
 
@@ -136,18 +150,6 @@ namespace DriverService.GraphQL
                 await context.SaveChangesAsync();
 
                 return new Status(true, "Order was failed, Driver too far");
-            }
-
-            //check if current driver exist
-            if (currentDriver != null)
-            {
-                 order.DriverId = currentDriver.DriverId;
-                 order.LatDriver = (float)currentDriver.LatDriver;
-                 order.LongDriver = (float)currentDriver.LongDriver;
-
-                 context.Orders.Update(order);
-                 await context.SaveChangesAsync();
-
             }
 
             return new Status(true, "Order Accepted");
