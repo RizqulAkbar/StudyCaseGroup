@@ -51,11 +51,13 @@ namespace DriverService
                 .AddMutationType<Mutation>()
                 .AddAuthorization();
 
+
+            // DI Dependency Injection
             services.Configure<KafkaSettings>(Configuration.GetSection("KafkaSettings"));
 
             services.AddHttpContextAccessor();
             services.AddControllers();
-            // DI Dependency Injection
+
             services.Configure<TokenSettings>(Configuration.GetSection("TokenSettings"));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
